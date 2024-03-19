@@ -1,0 +1,12 @@
+{
+  "ServerConfig": {
+    "Host": "",
+    "Port": 8000,
+    "DB": {
+      "Connection": ""
+    }
+  },
+
+  "Name": "Clappy",
+  "Version": "0.0.1"
+}
