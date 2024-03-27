@@ -7,8 +7,6 @@ require github.com/gorilla/mux v1.8.1
 require (
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
-	golang.org/x/mod v0.16.0 // indirect
-	golang.org/x/tools v0.19.0 // indirect
 )
 
 require (
