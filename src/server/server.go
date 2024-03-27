@@ -1,14 +1,21 @@
 package server
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
+
+	"BloTils/src/db"
 
 	"github.com/gorilla/mux"
-	"github.com/prinzpiuz/Clappy/src/server/handlers"
 )
+
+type ContextKey string
+
+const ContextServerConfig ContextKey = "serverconfig"
+const InternalServerError string = "Internal Server Error"
 
 type Server struct {
 	Router *mux.Router
@@ -18,17 +25,18 @@ type Server struct {
 type ServerConfig struct {
 	Host string
 	Port int
-	DB   map[string]string
+	DB   db.DB
 }
 
 func (server *Server) Start() {
-	err := http.ListenAndServe(server.Config.Addr(), server.Router)
-	print(err)
-	if errors.Is(err, http.ErrServerClosed) {
-		log.Fatal("server closed")
-	} else if err != nil {
-		log.Fatalf("error starting server: %v", err)
+
+	srv := &http.Server{
+		Handler:      server.Router,
+		Addr:         server.Config.Addr(),
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
 	}
+	log.Fatal(srv.ListenAndServe())
 }
 
 func (c *ServerConfig) Addr() string {
@@ -37,15 +45,28 @@ func (c *ServerConfig) Addr() string {
 
 func New(config ServerConfig) *Server {
 	router := mux.NewRouter()
+	router.Use(contentTypeSettingMiddleware)
+	router.Use(config.contextUpdateMiddleware)
 	server := &Server{
 		Router: router,
 		Config: config,
 	}
-	server.RegisterRoutes()
 	return server
 }
 
-func (server *Server) RegisterRoutes() {
-	server.Router.HandleFunc("/v1/ping", handlers.Ping).Methods("GET")
-	server.Router.HandleFunc("/v1/count/{url}", handlers.GetClaps).Methods("GET")
+// contextUpdateMiddleware is a middleware that injects the ServerConfig into the request context.
+func (c *ServerConfig) contextUpdateMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), ContextServerConfig, c)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// contentTypeSettingMiddleware sets the Content-Type header to
+// application/json for all requests passed to the next handler.
+func contentTypeSettingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
 }

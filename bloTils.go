@@ -3,7 +3,7 @@ package main
 import (
 	"path/filepath"
 
-	"github.com/prinzpiuz/Clappy/src/app"
+	"BloTils/src/app"
 )
 
 func main() {
