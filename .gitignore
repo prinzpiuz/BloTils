@@ -21,3 +21,6 @@
 go.work
 .vscode/
 node_modules/
+
+# debug files
+__debug_*

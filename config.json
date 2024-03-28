@@ -3,10 +3,11 @@
     "Host": "",
     "Port": 8000,
     "DB": {
-      "Connection": ""
+      "Connection": "./BloTils.db"
     }
   },
 
-  "Name": "Clappy",
-  "Version": "0.0.1"
+  "Name": "BloTils",
+  "Version": "0.0.1",
+  "Env": "dev"
 }

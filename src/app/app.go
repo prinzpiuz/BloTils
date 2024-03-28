@@ -1,12 +1,12 @@
 package app
 
 import (
+	"BloTils/src/server"
+	"BloTils/src/server/routes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/prinzpiuz/Clappy/src/server"
 )
 
 type App struct {
@@ -18,6 +18,7 @@ type Config struct {
 	ServerConfig server.ServerConfig
 	Name         string
 	Version      string
+	Env          string
 }
 
 func (app *App) Start() {
@@ -63,5 +64,6 @@ func New(config Config) *App {
 		Server: *server,
 		Config: config,
 	}
+	routes.RegisterRoutes(server)
 	return app
 }
