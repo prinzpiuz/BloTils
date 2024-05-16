@@ -3,7 +3,9 @@
     "Host": "",
     "Port": 8000,
     "DB": {
-      "Connection": "./BloTils.db"
+      "Connection": "./BloTils.db",
+      "Vacuum": "full",
+      "Foreign_Keys": true
     }
   },
 

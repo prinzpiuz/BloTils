@@ -1,16 +1,24 @@
 package db
 
+import "time"
+
 type Source struct {
-	source  string
-	like    bool
-	comment bool
+	id        int
+	source    string
+	like      bool
+	comment   bool
+	timestamp time.Time
 }
 
 type LikedIP struct {
-	ip string
+	id        int
+	ip        string
+	timestamp time.Time
 }
 
 type Like struct {
-	uri   string
-	count int
+	id        int
+	uri       string
+	count     int
+	timestamp time.Time
 }

@@ -13,7 +13,7 @@ import (
 // methods on the provided server. It uses gorilla/mux for routing and
 // gorilla/handlers for logging.
 func setRoutes(server *server.Server, path string, handler http.HandlerFunc, methods ...string) {
-	server.Router.Handle(path, handlers.LoggingHandler(os.Stdout, http.HandlerFunc(handler))).Methods(methods...)
+	server.Router.Handle(path, handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(handler))).Methods(methods...)
 }
 
 // RegisterRoutes registers the API routes for the server.

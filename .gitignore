@@ -20,7 +20,12 @@
 # Go workspace file
 go.work
 .vscode/
-node_modules/
 
+node_modules/
+package-lock.json
+package.json
+yarn.lock
 # debug files
 __debug_*
+BloTils.db
+*.db
