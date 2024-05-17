@@ -27,5 +27,7 @@ package.json
 yarn.lock
 # debug files
 __debug_*
+
+# DB files
 BloTils.db
 *.db
