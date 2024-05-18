@@ -25,7 +25,7 @@ func logo(c Config) {
 	fmt.Print(logoStyle.Render(appLogo))
 	fmt.Println()
 	fmt.Printf("Version : %s", c.Version)
-	fmt.Print(subtitleStyle.Render(fmt.Sprintf("Server Runing On %s:%d", c.ServerConfig.Host, c.ServerConfig.Port)))
+	fmt.Print(subtitleStyle.Render(fmt.Sprintf("Server Running On %s:%d", c.ServerConfig.Host, c.ServerConfig.Port)))
 	fmt.Println()
 	fmt.Println()
 }

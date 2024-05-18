@@ -1,9 +1,8 @@
 package main
 
 import (
-	"path/filepath"
-
 	"BloTils/src/app"
+	"path/filepath"
 )
 
 func main() {
@@ -11,5 +10,4 @@ func main() {
 	config := app.LoadConfig(fp)
 	app := app.New(config)
 	app.Start()
-
 }

@@ -45,6 +45,10 @@ func (c *ServerConfig) Addr() string {
 
 func New(config ServerConfig) *Server {
 	router := mux.NewRouter()
+	err := config.DB.Initialize()
+	if err != nil {
+		log.Fatalf("Error Initializing DB: %v", err)
+	}
 	router.Use(contentTypeSettingMiddleware)
 	router.Use(config.contextUpdateMiddleware)
 	server := &Server{
