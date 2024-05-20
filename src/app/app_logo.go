@@ -9,9 +9,6 @@ import (
 var logoStyle = lipgloss.NewStyle().
 	Bold(true).
 	Foreground(lipgloss.Color("#7D56F4"))
-var subtitleStyle = lipgloss.NewStyle().
-	Padding(0, 22).
-	Bold(true)
 
 const appLogo = `
 ██████  ██    ██████ ██████ ██ ██    ███████
@@ -24,8 +21,9 @@ const appLogo = `
 func logo(c Config) {
 	fmt.Print(logoStyle.Render(appLogo))
 	fmt.Println()
-	fmt.Printf("Version : %s", c.Version)
-	fmt.Print(subtitleStyle.Render(fmt.Sprintf("Server Running On %s:%d", c.ServerConfig.Host, c.ServerConfig.Port)))
+	fmt.Print("Utilities For Your Blog Engine\n")
+	fmt.Print(fmt.Sprintf("Version : %s\n", c.Version))
+	fmt.Print(fmt.Sprintf("Server Running On %s:%d\n", c.ServerConfig.Host, c.ServerConfig.Port))
 	fmt.Println()
 	fmt.Println()
 }

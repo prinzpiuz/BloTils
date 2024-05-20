@@ -7,7 +7,8 @@ import (
 	"net/http"
 )
 
-// Ping handles ping requests and responds with a JSON "pong" message.
+// Ping is an HTTP handler that responds with a "pong" message.
+// It also checks the connection to the database and returns an error if the connection fails.
 func Ping(w http.ResponseWriter, r *http.Request) {
 	serverConfig, ok := r.Context().Value(server.ContextServerConfig).(*server.ServerConfig)
 	if ok && serverConfig != nil {

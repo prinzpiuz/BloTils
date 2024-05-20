@@ -21,5 +21,5 @@ func setRoutes(server *server.Server, path string, handler http.HandlerFunc, met
 // and HTTP methods allowed.
 func RegisterRoutes(server *server.Server) {
 	setRoutes(server, "/v1/ping", local_handlers.Ping, "GET")
-	setRoutes(server, "/v1/count/{url}", local_handlers.GetClaps, "GET")
+	setRoutes(server, "/v1/count_like", local_handlers.GetClaps, "GET", "POST")
 }

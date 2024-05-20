@@ -2,23 +2,31 @@ package db
 
 import "time"
 
-type Source struct {
+type DomainSettings struct {
 	id        int
-	source    string
-	like      bool
-	comment   bool
+	likes     bool
+	comments  bool
 	timestamp time.Time
 }
 
-type LikedIP struct {
+type Domain struct {
 	id        int
-	ip        string
+	settings  DomainSettings
+	domain    string
 	timestamp time.Time
 }
 
 type Like struct {
 	id        int
+	domain    Domain
 	uri       string
+	count     int
+	timestamp time.Time
+}
+
+type LikedIPs struct {
+	id        int
+	ip        string
 	count     int
 	timestamp time.Time
 }
