@@ -1,13 +1,14 @@
+// Package server provides the main server implementation.
 package server
 
 import (
+	"BloTils/src/db"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
-
-	"BloTils/src/db"
 
 	"github.com/gorilla/mux"
 )
@@ -49,6 +50,8 @@ func New(config ServerConfig) *Server {
 	if err != nil {
 		log.Fatalf("Error Initializing DB: %v", err)
 	}
+	router.Use(mux.CORSMethodMiddleware(router))
+	router.Use(corsSettingMiddleware)
 	router.Use(contentTypeSettingMiddleware)
 	router.Use(config.contextUpdateMiddleware)
 	server := &Server{
@@ -71,6 +74,15 @@ func (c *ServerConfig) contextUpdateMiddleware(next http.Handler) http.Handler {
 func contentTypeSettingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func corsSettingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "api") {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		next.ServeHTTP(w, r)
 	})
 }

@@ -1,3 +1,4 @@
+// Package routes provides the HTTP routes for the server.
 package routes
 
 import (
@@ -20,6 +21,6 @@ func setRoutes(server *server.Server, path string, handler http.HandlerFunc, met
 // It calls setRoutes to add each route, specifying the path, handler function,
 // and HTTP methods allowed.
 func RegisterRoutes(server *server.Server) {
-	setRoutes(server, "/v1/ping", local_handlers.Ping, "GET")
-	setRoutes(server, "/v1/count_like", local_handlers.GetClaps, "GET", "POST")
+	setRoutes(server, "/api/v1/ping", local_handlers.Ping, http.MethodGet)
+	setRoutes(server, "/api/v1/count_like", local_handlers.GetClaps, http.MethodGet, http.MethodPost)
 }
