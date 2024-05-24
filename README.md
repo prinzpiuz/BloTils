@@ -1,3 +1,3 @@
-# BloTils
+# **BLOTILS** aka Blog Utils
 
-Minimal go server to count clapping
+Utils for your static blog or pages
