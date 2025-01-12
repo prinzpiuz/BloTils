@@ -65,5 +65,6 @@ func New(config Config) *App {
 		Config: config,
 	}
 	routes.RegisterRoutes(server)
+	routes.ServeStaticFiles(server)
 	return app
 }

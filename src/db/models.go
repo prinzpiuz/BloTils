@@ -18,7 +18,7 @@ type DomainSettings struct {
 // The domain field contains the domain name.
 // The timestamp field contains the timestamp for when the domain was created or updated.
 type Domain struct {
-	id        int
+	ID        int
 	settings  DomainSettings
 	domain    string
 	timestamp time.Time
@@ -47,20 +47,30 @@ func (domain Domain) CommentsEnabled() bool {
 // The timestamp field is the timestamp of when the like was created.
 type Likes struct {
 	id        int
-	domain    Domain
-	uri       string
-	count     int
-	timestamp time.Time
+	domain_id int
+	Domain    Domain
+	URI       string
+	Count     int
 }
 
 func (likes Likes) IsEmpty() bool {
 	return likes == Likes{}
 }
 
+func (likes Likes) GetDomainID() int {
+	return likes.Domain.ID
+}
+
 // LikedIPs represents a record of an IP address that has liked something, along with the count of likes and the timestamp of the last like.
 type LikedIPs struct {
 	id        int
-	ip        string
-	count     int
+	IP        string
+	Count     int
+	Domain    string
+	Path      string
 	timestamp time.Time
+}
+
+func (likedIPs LikedIPs) IsEmpty() bool {
+	return likedIPs == LikedIPs{}
 }

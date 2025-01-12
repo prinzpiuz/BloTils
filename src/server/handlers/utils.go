@@ -9,11 +9,25 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
+)
+
+var (
+	UnAuthorized     = errors.New("UnAuthorized")
+	BadRequest       = errors.New("Bad Request")
+	NotFound         = errors.New("Not Found")
+	Unsupported      = errors.New("Unsupported")
+	Internal         = errors.New("Internal Server Error")
+	Timeout          = errors.New("Timeout")
+	BadGateway       = errors.New("Bad Gateway")
+	Service          = errors.New("Service Unavailable")
+	MethodNotAllowed = errors.New("Method Not Allowed")
 )
 
 // check_for_request_content_type checks the Content-Type header of the incoming HTTP request
@@ -83,6 +97,16 @@ func get_db_connection(r *http.Request) *sql.DB {
 	return nil
 }
 
+func get_domain(url_string string) string {
+	url, err := url.Parse(url_string)
+	if err != nil {
+		msg := fmt.Sprintf("Error parsing URL: %s", url_string)
+		log.Print(msg)
+		return ""
+	}
+	return url.Host
+}
+
 // check_for_domain checks if the given domain name is configured for the Blotils application.
 // It retrieves the domain from the database and performs the following checks:
 //  1. If the domain is not found, it returns an error with a log message.
@@ -90,24 +114,24 @@ func get_db_connection(r *http.Request) *sql.DB {
 //     If likes are not enabled, it returns an error with a log message.
 //
 // If all checks pass, it returns nil.
-func check_for_domain(r *http.Request, domain_name string, context any) error {
+func check_for_domain(r *http.Request, domain_name string, context any) (db.Domain, error) {
 	db_connection := get_db_connection(r)
 	domain := db.GetDomain(db_connection, domain_name)
 	if domain.IsEmpty() {
 		msg := "This Domain(%s) Is Not Configured For Blotils"
 		log.Printf(msg, domain_name)
-		return fmt.Errorf(msg, domain_name)
+		return db.Domain{}, fmt.Errorf(msg, domain_name)
 	}
 	_, ok := context.(ClapCounter)
 	if ok {
 		if !domain.LikesEnabled() {
 			msg := "Like Counting Is Not Enabled For This Domain (%s)"
 			log.Printf(msg, domain_name)
-			return fmt.Errorf(msg, domain_name)
+			return db.Domain{}, fmt.Errorf(msg, domain_name)
 		}
 	}
 
-	return nil
+	return domain, nil
 }
 
 // setHTTPError writes an HTTP error response with the provided error message and HTTP status code.
@@ -122,7 +146,6 @@ func setHTTPError(w http.ResponseWriter, err error, reference string, httpStatus
 // If there is an error parsing the query string, it sets an HTTP error response
 // and returns an empty string.
 func get_path(r *http.Request, w http.ResponseWriter) string {
-
 	q, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		setHTTPError(w, err, "Error Parsing Query", http.StatusBadRequest)
@@ -136,11 +159,96 @@ func get_path(r *http.Request, w http.ResponseWriter) string {
 	return s.Path
 }
 
-// func get_like_count(r *http.Request, clapCounter ClapCounter) db.Likes {
-// 	db_connection := get_db_connection(r)
-// 	likes := db.GetLikes(db_connection, clapCounter.URL, clapCounter.Page)
-// 	if likes.IsEmpty() {
-// 		return db.Likes{count=0}
-// 	}
-// 	return likes
-// }
+// path_to_cookie_str returns a string representation of a cookie name based on the provided path.
+func path_to_cookie_str(cookie_name string, path string) string {
+	return fmt.Sprintf("%s%s", cookie_name, strings.Join(strings.Split(path, "/"), "_"))
+}
+
+// setCookie sets an HTTP cookie with the provided name, value, and path. The cookie is set with
+// HttpOnly, Secure, and SameSite=None attributes to ensure it is only accessible by the server
+// and is transmitted securely over HTTPS.
+func setCookie(w http.ResponseWriter, name string, value string) {
+	cookie := http.Cookie{
+		Name:     name,
+		Value:    value,
+		Domain:   "127.0.0.1",
+		Path:     "/",
+		Expires:  time.Now().Add(365 * 24 * time.Hour),
+		HttpOnly: false,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
+	}
+
+	http.SetCookie(w, &cookie)
+
+}
+
+// getCookie retrieves the value of the cookie with the given name from the provided HTTP request.
+// If the cookie is not found, it returns an error. If there is any other error retrieving the
+// cookie, it wraps the error and returns it.
+func getCookie(r *http.Request, name string) (*http.Cookie, error) {
+	cookie, err := r.Cookie(name)
+	if err != nil {
+		switch {
+		case errors.Is(err, http.ErrNoCookie):
+			err = fmt.Errorf("Cookie Not Found")
+		default:
+			err = fmt.Errorf(err.Error())
+		}
+		return nil, err
+	}
+	return cookie, nil
+}
+
+// add_common_files appends the "favicon" template file to the given list of HTML template files.
+// This function is used to ensure that the "favicon" template is always included when rendering
+// HTML templates.
+func add_common_files(files []string) []string {
+	const html_location = "templates/%s.html"
+	return append(files, fmt.Sprintf(html_location, "favicon"))
+}
+
+type TemplateData struct {
+	Title    string
+	MetaDesc string
+	Static   string
+	Data     interface{}
+}
+
+// set_template_data sets the default title and meta description for the template data if they are not already set.
+// It also sets the static file path from the server configuration.
+// The updated template data is returned.
+func set_template_data(data TemplateData, r *http.Request) TemplateData {
+	serverConfig, ok := r.Context().Value(server.ContextServerConfig).(*server.ServerConfig)
+	if ok && serverConfig != nil {
+		if data.Title == "" {
+			data.Title = "BloTils - aka Blog uTils"
+		}
+		if data.MetaDesc == "" {
+			data.MetaDesc = "A Blog Utils and Analytics Platform"
+		}
+		data.Static = serverConfig.StaticFiles
+	}
+	return data
+}
+
+// generateHTML renders the specified HTML templates with the provided data and writes the
+// result to the given http.ResponseWriter.
+//
+// The filenames parameter specifies the names of the HTML template files to be rendered,
+// without the ".html" extension. The templates are loaded from the "public/html/"
+// directory.
+//
+// The data parameter provides the data to be used in rendering the templates.
+//
+// If there is an error parsing or executing the templates, the error is returned.
+func generateHTML(w http.ResponseWriter, data TemplateData, filenames ...string) error {
+	files := make([]string, 0, len(filenames))
+	for _, file := range filenames {
+		files = append(files, fmt.Sprintf("templates/%s.html", file))
+	}
+	files = add_common_files(files)
+	templates := template.Must(template.ParseFiles(files...))
+	err := templates.ExecuteTemplate(w, "layout", data)
+	return err
+}
