@@ -111,6 +111,7 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 	if clapCounter.Page == "" {
 		err := decode_request(r, w, &clapCounter)
 		if err != nil {
+			log.Printf("Error decoding request: %v", err)
 			return
 		}
 	}
@@ -123,9 +124,9 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 	if continue_counting {
 		likes := get_likes(r, clapCounter)
 		switch r.Method {
-		case "GET":
+		case http.MethodGet:
 			clapCounter.SetClapCounter(clapCounter.URL, ClapCount, likes.Count, true)
-		case "POST":
+		case http.MethodPost:
 			content_type_err := check_for_request_content_type(w, r)
 			if content_type_err != nil {
 				return
@@ -152,6 +153,7 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(jsonData)
 	if err != nil {
 		log.Printf("Error writing response: %v", err)
