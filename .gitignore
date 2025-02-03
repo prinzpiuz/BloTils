@@ -31,3 +31,4 @@ __debug_*
 # DB files
 BloTils.db
 *.db
+*.session.sql
