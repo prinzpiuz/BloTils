@@ -1,0 +1,16 @@
+{{ define "content" }}
+
+<h1>Clap Counter</h1>
+<div id="blotils">
+  <button id="blotils_like_btn" type="button">like</button>
+  <p>count:0</p>
+</div>
+
+<script
+  data-blotils_url="http://blotils.com:8000/"
+  data-blotils_like_btn="blotils_like_btn"
+  async
+  src="http://blotils.com:8000/static/js/BloTils.js"
+></script>
+
+{{ end }}

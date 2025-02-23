@@ -1,0 +1,19 @@
+{{ define "layout" }}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="description" content="{{.MetaDesc}}" />
+    <meta name="keywords" content="Blog, Go, Utils, Analytics, Web" />
+    <meta name="author" content="prinzpiuz" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {{ template "favicon.html" . }}
+    <title>BloTils</title>
+  </head>
+  <body>
+    <div class="container">{{ template "content" . }}</div>
+  </body>
+</html>
+
+{{ end }}

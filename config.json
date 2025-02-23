@@ -6,7 +6,8 @@
       "DBLocation": "./BloTils.db",
       "Vacuum": "full",
       "ForeignKeys": true
-    }
+    },
+    "StaticFiles": "static"
   },
 
   "Name": "BloTils",

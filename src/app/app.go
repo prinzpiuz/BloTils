@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	fp "path/filepath"
 )
 
 type App struct {
@@ -15,10 +16,11 @@ type App struct {
 }
 
 type Config struct {
-	ServerConfig server.ServerConfig
-	Name         string
-	Version      string
-	Env          string
+	ServerConfig  server.ServerConfig
+	Name          string
+	Version       string
+	Env           string
+	BaseDirectory string
 }
 
 func (app *App) Start() {
@@ -32,6 +34,13 @@ func LoadConfig(filepath string) Config {
 		fmt.Println(err)
 		return Config{}
 	}
+	baseDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	config.BaseDirectory = baseDir
+	config.ServerConfig.BaseDirectory = baseDir
+	config.ServerConfig.DB.DBBaseDirectory = fp.Join(baseDir, "src/db")
 	return config
 }
 
@@ -65,5 +74,6 @@ func New(config Config) *App {
 		Config: config,
 	}
 	routes.RegisterRoutes(server)
+	routes.ServeStaticFiles(server)
 	return app
 }
