@@ -3,27 +3,35 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
+	"log"
 	"net/http"
 )
 
 // Ping is an HTTP handler that responds with a "pong" message.
 // It also checks the connection to the database and returns an error if the connection fails.
 func Ping(w http.ResponseWriter, r *http.Request) {
+	msg := "pong"
 	db := get_db_connection(r)
 	if db != nil {
 		err := db.Ping()
 		if err != nil {
-			setHTTPError(w, err, "Database Error", http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
+			msg = "Database Ping Error"
 		}
 
 	} else {
-		msg := "Database Not Found"
-		setHTTPError(w, errors.New(msg), "Database Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		msg = "Database Not Found"
 	}
-	p := map[string]string{"message": "pong"}
-	err := json.NewEncoder(w).Encode(p)
+	responseBody := map[string]string{"message": msg}
+	jsonData, err := json.Marshal(responseBody)
 	if err != nil {
-		setHTTPError(w, err, "JSON Error", http.StatusInternalServerError)
+		log.Printf("Error Encoding JSON: %v", err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(jsonData)
+	if err != nil {
+		log.Printf("Error writing response: %v", err)
 	}
 }

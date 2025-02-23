@@ -65,7 +65,7 @@ func GetLikedIP(db *sql.DB, domain string, page string, ip string) LikedIPs {
 			log.Printf("DB: IP %s, Not Found Liked in %s for %s", ip, domain, page)
 			return LikedIPs{}
 		}
-		log.Printf("Error Getting Likes On %s For %s: %v", ip, page, err)
+		log.Printf("Error Getting LikedIPs On %s For %s: %v", ip, page, err)
 		return LikedIPs{}
 	}
 	return likedIP
@@ -82,4 +82,11 @@ func UpdateIPLikeCount(db *sql.DB, domain string, path string, ip string) {
 func UpdateLikeCount(db *sql.DB, page string, doamin_id int) error {
 	_, err := db.Exec(updateLike, page, doamin_id)
 	return err
+}
+
+func AddDomainAndSettings(db *sql.DB, domain string, likes int, comments int) {
+	_, err := db.Exec(addDomainAndSettings, likes, comments, domain)
+	if err != nil {
+		log.Printf("Error Adding Domain %s: %v", domain, err)
+	}
 }

@@ -55,3 +55,10 @@ const updateLike = `INSERT INTO Likes(uri, count, domain_id)
 					ON CONFLICT(uri)
 					DO UPDATE
 					SET count = count + 1`
+
+const addDomainAndSettings = `BEGIN TRANSACTION;
+							  INSERT INTO DomainSettings (likes, comments, created_time)
+							  VALUES (?, ?, datetime());
+							  INSERT INTO Domain (settings_id, domain, created_time)
+							  VALUES (last_insert_rowid(), ?, datetime());
+							  COMMIT TRANSACTION;`

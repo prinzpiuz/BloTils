@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/didip/tollbooth v4.0.2+incompatible // indirect
 	github.com/didip/tollbooth/v8 v8.0.1 // indirect
 	github.com/go-pkgz/expirable-cache/v3 v3.0.0 // indirect

@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 var (
@@ -90,7 +89,7 @@ func decode_request(r *http.Request, w http.ResponseWriter, dst interface{}) err
 // get_db_connection returns the database connection stored in the server configuration
 // context. If the configuration is not available, it returns nil.
 func get_db_connection(r *http.Request) *sql.DB {
-	serverConfig, ok := r.Context().Value(server.ContextServerConfig).(*server.ServerConfig)
+	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
 	if ok && serverConfig != nil {
 		return serverConfig.DB.Connection
 	}
@@ -160,45 +159,45 @@ func get_path(r *http.Request, w http.ResponseWriter) string {
 }
 
 // path_to_cookie_str returns a string representation of a cookie name based on the provided path.
-func path_to_cookie_str(cookie_name string, path string) string {
-	return fmt.Sprintf("%s%s", cookie_name, strings.Join(strings.Split(path, "/"), "_"))
-}
+// func path_to_cookie_str(cookie_name string, path string) string {
+// 	return fmt.Sprintf("%s%s", cookie_name, strings.Join(strings.Split(path, "/"), "_"))
+// }
 
 // setCookie sets an HTTP cookie with the provided name, value, and path. The cookie is set with
 // HttpOnly, Secure, and SameSite=None attributes to ensure it is only accessible by the server
 // and is transmitted securely over HTTPS.
-func setCookie(w http.ResponseWriter, name string, value string) {
-	cookie := http.Cookie{
-		Name:     name,
-		Value:    value,
-		Domain:   "127.0.0.1",
-		Path:     "/",
-		Expires:  time.Now().Add(365 * 24 * time.Hour),
-		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteNoneMode,
-	}
+// func setCookie(w http.ResponseWriter, name string, value string) {
+// 	cookie := http.Cookie{
+// 		Name:     name,
+// 		Value:    value,
+// 		Domain:   "127.0.0.1",
+// 		Path:     "/",
+// 		Expires:  time.Now().Add(365 * 24 * time.Hour),
+// 		HttpOnly: false,
+// 		Secure:   true,
+// 		SameSite: http.SameSiteNoneMode,
+// 	}
 
-	http.SetCookie(w, &cookie)
+// 	http.SetCookie(w, &cookie)
 
-}
+// }
 
 // getCookie retrieves the value of the cookie with the given name from the provided HTTP request.
 // If the cookie is not found, it returns an error. If there is any other error retrieving the
 // cookie, it wraps the error and returns it.
-func getCookie(r *http.Request, name string) (*http.Cookie, error) {
-	cookie, err := r.Cookie(name)
-	if err != nil {
-		switch {
-		case errors.Is(err, http.ErrNoCookie):
-			err = fmt.Errorf("Cookie Not Found")
-		default:
-			err = fmt.Errorf(err.Error())
-		}
-		return nil, err
-	}
-	return cookie, nil
-}
+// func getCookie(r *http.Request, name string) (*http.Cookie, error) {
+// 	cookie, err := r.Cookie(name)
+// 	if err != nil {
+// 		switch {
+// 		case errors.Is(err, http.ErrNoCookie):
+// 			err = fmt.Errorf("Cookie Not Found")
+// 		default:
+// 			err = fmt.Errorf(err.Error())
+// 		}
+// 		return nil, err
+// 	}
+// 	return cookie, nil
+// }
 
 // add_common_files appends the "favicon" template file to the given list of HTML template files.
 // This function is used to ensure that the "favicon" template is always included when rendering
@@ -219,7 +218,7 @@ type TemplateData struct {
 // It also sets the static file path from the server configuration.
 // The updated template data is returned.
 func set_template_data(data TemplateData, r *http.Request) TemplateData {
-	serverConfig, ok := r.Context().Value(server.ContextServerConfig).(*server.ServerConfig)
+	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
 	if ok && serverConfig != nil {
 		if data.Title == "" {
 			data.Title = "BloTils - aka Blog uTils"

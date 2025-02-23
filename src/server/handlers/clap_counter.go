@@ -65,10 +65,7 @@ func get_likes(r *http.Request, clapCounter ClapCounter) db.Likes {
 func already_liked_IP(r *http.Request, clapCounter ClapCounter) bool {
 	db_connection := get_db_connection(r)
 	liked_ips := db.GetLikedIP(db_connection, clapCounter.URL, clapCounter.Page, clapCounter.remote_addr)
-	if liked_ips.IsEmpty() {
-		return false
-	}
-	return true
+	return !liked_ips.IsEmpty()
 }
 
 // add_like_to_page updates the like count for the given page and domain ID in the database.
@@ -105,6 +102,10 @@ func add_like_to_page(r *http.Request, clapCounter ClapCounter, doamin_id int) e
 func GetClaps(w http.ResponseWriter, r *http.Request) {
 	var clapCounter ClapCounter
 	var continue_counting bool = true
+	content_type_err := check_for_request_content_type(w, r)
+	if content_type_err != nil {
+		return
+	}
 	clapCounter.remote_addr = r.RemoteAddr
 	clapCounter.URL = get_domain(r.Referer())
 	clapCounter.Page = get_path(r, w)
@@ -127,10 +128,6 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 		case http.MethodGet:
 			clapCounter.SetClapCounter(clapCounter.URL, ClapCount, likes.Count, true)
 		case http.MethodPost:
-			content_type_err := check_for_request_content_type(w, r)
-			if content_type_err != nil {
-				return
-			}
 			if already_liked_IP(r, clapCounter) {
 				clapCounter.SetClapCounter(clapCounter.URL, ClapAlreadyCounted, likes.Count, false)
 			} else {

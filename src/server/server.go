@@ -16,8 +16,10 @@ import (
 
 type ContextKey string
 
-const ContextServerConfig ContextKey = "serverconfig"
-const InternalServerError string = "Internal Server Error"
+const (
+	ServerConfigContext ContextKey = "serverconfiguration"
+	InternalServerError string     = "Internal Server Error"
+)
 
 type Server struct {
 	Router *mux.Router
@@ -25,10 +27,11 @@ type Server struct {
 }
 
 type ServerConfig struct {
-	Host        string
-	Port        int
-	DB          db.DB
-	StaticFiles string
+	Host          string
+	Port          int
+	DB            db.DB
+	StaticFiles   string
+	BaseDirectory string
 }
 
 func (server *Server) Start() {
@@ -54,7 +57,7 @@ func New(config ServerConfig) *Server {
 	router.Use(mux.CORSMethodMiddleware(router))
 	router.Use(corsPolicySettingMiddleware)
 	router.Use(contentTypeSettingMiddleware)
-	router.Use(config.contextUpdateMiddleware)
+	router.Use(config.ContextUpdateMiddleware)
 	server := &Server{
 		Router: router,
 		Config: config,
@@ -63,9 +66,9 @@ func New(config ServerConfig) *Server {
 }
 
 // contextUpdateMiddleware is a middleware that injects the ServerConfig into the request context.
-func (c *ServerConfig) contextUpdateMiddleware(next http.Handler) http.Handler {
+func (c *ServerConfig) ContextUpdateMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), ContextServerConfig, c)
+		ctx := context.WithValue(r.Context(), ServerConfigContext, c)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

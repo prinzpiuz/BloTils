@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/sqlite3"
@@ -16,10 +17,11 @@ import (
 )
 
 type DB struct {
-	DBLocation  string
-	Vacuum      string
-	ForeignKeys bool
-	Connection  *sql.DB
+	DBLocation      string
+	Vacuum          string
+	ForeignKeys     bool
+	Connection      *sql.DB
+	DBBaseDirectory string
 }
 
 func closeDB(new_db *sql.DB) {
@@ -57,7 +59,8 @@ func (db *DB) Initialize() error {
 		closeDB(new_db)
 		return err
 	}
-	err = runMigrations(new_db)
+	migrationFiles := filepath.Join(db.DBBaseDirectory, "migrations")
+	err = runMigrations(new_db, migrationFiles)
 	if err != nil {
 		log.Println("Error Running Migrations")
 		closeDB(new_db)
@@ -67,14 +70,15 @@ func (db *DB) Initialize() error {
 	return nil
 }
 
-func runMigrations(db *sql.DB) error {
+func runMigrations(db *sql.DB, migrationFiles string) error {
 	instance, err := sqlite3.WithInstance(db, &sqlite3.Config{})
 	if err != nil {
 		log.Printf("Error Connecting With SQLite Instance: %s", err)
 		return err
 	}
 
-	fSrc, err := (&file.File{}).Open("./src/db/migrations")
+	fSrc, err := (&file.File{}).Open(migrationFiles)
+	print()
 	if err != nil {
 		closeFile(fSrc)
 		log.Printf("Error Getting Migration Files: %s", err)
