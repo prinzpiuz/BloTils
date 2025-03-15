@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -32,6 +33,7 @@ type ServerConfig struct {
 	DB            db.DB
 	StaticFiles   string
 	BaseDirectory string
+	IsProduction  bool
 }
 
 func (server *Server) Start() {
@@ -56,6 +58,7 @@ func New(config ServerConfig) *Server {
 	}
 	router.Use(mux.CORSMethodMiddleware(router))
 	router.Use(corsPolicySettingMiddleware)
+	router.Use(csrfMiddleware)
 	router.Use(contentTypeSettingMiddleware)
 	router.Use(config.ContextUpdateMiddleware)
 	server := &Server{
@@ -105,6 +108,36 @@ func corsPolicySettingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "api") {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// csrfMiddleware is a middleware function that provides Cross-Site Request Forgery (CSRF) protection
+// for non-API POST requests. It validates the CSRF token from the request cookie against
+// the token submitted in the form, rejecting requests with missing or invalid tokens.
+func csrfMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var allowedMethods = []string{http.MethodPost, http.MethodPut, http.MethodDelete}
+		if slices.Contains(allowedMethods, r.Method) && !strings.Contains(r.URL.Path, "api") {
+			var expectedToken string
+
+			cookie, err := r.Cookie("csrf_token")
+			if err != nil {
+				msg := "Error: CSRF token missing"
+				log.Println(msg)
+				http.Error(w, msg, http.StatusForbidden)
+				return
+			}
+			expectedToken = cookie.Value
+
+			actualToken := r.FormValue("csrf_token")
+			if actualToken != expectedToken {
+				msg := "Error: CSRF token mismatch"
+				log.Println(msg)
+				http.Error(w, msg, http.StatusForbidden)
+				return
+			}
 		}
 		next.ServeHTTP(w, r)
 	})

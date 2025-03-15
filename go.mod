@@ -1,6 +1,8 @@
 module BloTils
 
-go 1.22
+go 1.23.0
+
+toolchain go1.23.7
 
 require (
 	github.com/gorilla/mux v1.8.1
@@ -13,6 +15,8 @@ require (
 	github.com/didip/tollbooth/v8 v8.0.1 // indirect
 	github.com/go-pkgz/expirable-cache/v3 v3.0.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/time v0.9.0 // indirect
 )
 
@@ -32,5 +36,5 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/muesli/termenv v0.15.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
 )

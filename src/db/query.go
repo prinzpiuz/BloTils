@@ -62,3 +62,11 @@ const addDomainAndSettings = `BEGIN TRANSACTION;
 							  INSERT INTO Domain (settings_id, domain, created_time)
 							  VALUES (last_insert_rowid(), ?, datetime());
 							  COMMIT TRANSACTION;`
+
+const addAdminUser = `INSERT INTO User(email, password_hash, user_role, is_active, user_status)
+					  VALUES (?, ?, 1, 1, 1)`
+
+const accountCreationRequest = `INSERT INTO User(email, password_hash, user_role, is_active, user_status)
+					  VALUES (?, ?, 2, 0, 2)`
+
+const getUser = `SELECT * FROM User WHERE email = ?`

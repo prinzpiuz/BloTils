@@ -5,7 +5,9 @@ package handlers
 import (
 	"BloTils/src/db"
 	"BloTils/src/server"
+	"crypto/rand"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,8 +15,13 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/mail"
 	"net/url"
+	"regexp"
 	"strings"
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -166,38 +173,40 @@ func get_path(r *http.Request, w http.ResponseWriter) string {
 // setCookie sets an HTTP cookie with the provided name, value, and path. The cookie is set with
 // HttpOnly, Secure, and SameSite=None attributes to ensure it is only accessible by the server
 // and is transmitted securely over HTTPS.
-// func setCookie(w http.ResponseWriter, name string, value string) {
-// 	cookie := http.Cookie{
-// 		Name:     name,
-// 		Value:    value,
-// 		Domain:   "127.0.0.1",
-// 		Path:     "/",
-// 		Expires:  time.Now().Add(365 * 24 * time.Hour),
-// 		HttpOnly: false,
-// 		Secure:   true,
-// 		SameSite: http.SameSiteNoneMode,
-// 	}
+func setCookie(r *http.Request, w http.ResponseWriter, name string, value string, expires time.Time) {
+	var secure bool = false
+	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
+	if ok && serverConfig != nil {
+		secure = serverConfig.IsProduction
+	}
+	cookie := http.Cookie{
+		Name:     name,
+		Value:    value,
+		Expires:  expires,
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: http.SameSiteStrictMode,
+	}
+	http.SetCookie(w, &cookie)
 
-// 	http.SetCookie(w, &cookie)
-
-// }
+}
 
 // getCookie retrieves the value of the cookie with the given name from the provided HTTP request.
 // If the cookie is not found, it returns an error. If there is any other error retrieving the
 // cookie, it wraps the error and returns it.
-// func getCookie(r *http.Request, name string) (*http.Cookie, error) {
-// 	cookie, err := r.Cookie(name)
-// 	if err != nil {
-// 		switch {
-// 		case errors.Is(err, http.ErrNoCookie):
-// 			err = fmt.Errorf("Cookie Not Found")
-// 		default:
-// 			err = fmt.Errorf(err.Error())
-// 		}
-// 		return nil, err
-// 	}
-// 	return cookie, nil
-// }
+func getCookie(r *http.Request, name string) (*http.Cookie, error) {
+	cookie, err := r.Cookie(name)
+	if err != nil {
+		switch {
+		case errors.Is(err, http.ErrNoCookie):
+			err = fmt.Errorf("Cookie Not Found")
+		default:
+			err = fmt.Errorf(err.Error())
+		}
+		return nil, err
+	}
+	return cookie, nil
+}
 
 // add_common_files appends the "favicon" template file to the given list of HTML template files.
 // This function is used to ensure that the "favicon" template is always included when rendering
@@ -208,16 +217,17 @@ func add_common_files(files []string) []string {
 }
 
 type TemplateData struct {
-	Title    string
-	MetaDesc string
-	Static   string
-	Data     interface{}
+	Title     string
+	MetaDesc  string
+	Static    string
+	CSRFToken string
+	Data      interface{}
 }
 
 // set_template_data sets the default title and meta description for the template data if they are not already set.
 // It also sets the static file path from the server configuration.
 // The updated template data is returned.
-func set_template_data(data TemplateData, r *http.Request) TemplateData {
+func set_common_template_data(data TemplateData, r *http.Request, w http.ResponseWriter) TemplateData {
 	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
 	if ok && serverConfig != nil {
 		if data.Title == "" {
@@ -228,6 +238,7 @@ func set_template_data(data TemplateData, r *http.Request) TemplateData {
 		}
 		data.Static = serverConfig.StaticFiles
 	}
+	data.CSRFToken = generateCSRFToken(r, w)
 	return data
 }
 
@@ -241,7 +252,7 @@ func set_template_data(data TemplateData, r *http.Request) TemplateData {
 // The data parameter provides the data to be used in rendering the templates.
 //
 // If there is an error parsing or executing the templates, the error is returned.
-func generateHTML(w http.ResponseWriter, data TemplateData, filenames ...string) error {
+func generateHTML(w http.ResponseWriter, data TemplateData, filenames ...string) {
 	files := make([]string, 0, len(filenames))
 	for _, file := range filenames {
 		files = append(files, fmt.Sprintf("templates/%s.html", file))
@@ -249,5 +260,49 @@ func generateHTML(w http.ResponseWriter, data TemplateData, filenames ...string)
 	files = add_common_files(files)
 	templates := template.Must(template.ParseFiles(files...))
 	err := templates.ExecuteTemplate(w, "layout", data)
-	return err
+	if err != nil {
+		log.Printf("Error Generating HTML: %v", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// passwordHash generates a bcrypt hash for the given password using the default cost.
+// It logs an error and panics if password hashing fails.
+// Returns the hashed password as a string.
+func passwordHash(pwd string) string {
+	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
+	if err != nil {
+		log.Printf("Error Hashing Password %v", err)
+		panic(err)
+	}
+	return string(hash)
+}
+
+// isValidEmail checks if the provided email address is valid by performing two validations:
+// 1. Using mail.ParseAddress to check basic email format
+// 2. Using a regular expression to validate email structure
+// Returns true if the email is valid, false otherwise
+func isValidEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	if err != nil {
+		log.Printf("Not A Valid Email %v", err)
+		return false
+	}
+	pattern := `^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`
+	re := regexp.MustCompile(pattern)
+	return re.MatchString(email)
+}
+
+// New CSRF token generation
+func generateCSRFToken(r *http.Request, w http.ResponseWriter) string {
+	b := make([]byte, 32)
+	rand.Read(b)
+	csrfToken := base64.URLEncoding.EncodeToString(b)
+	setCookie(r, w, "csrf_token", csrfToken, time.Now().Add(5*time.Minute))
+	return csrfToken
+}
+
+type errorAndMessages struct {
+	ErrorMsg       []string
+	CommonMessages []string
 }

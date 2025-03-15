@@ -11,7 +11,8 @@ import (
 // If the domain is not found, it returns an empty Domain.
 func GetDomain(db *sql.DB, domain_name string) Domain {
 	var domain Domain
-	err := db.QueryRow(getDomain, domain_name).Scan(&domain.ID,
+	err := db.QueryRow(getDomain, domain_name).Scan(
+		&domain.ID,
 		&domain.settings.id,
 		&domain.domain,
 		&domain.timestamp,
@@ -54,7 +55,8 @@ func GetLikes(db *sql.DB, domain_name string, page string) Likes {
 
 func GetLikedIP(db *sql.DB, domain string, page string, ip string) LikedIPs {
 	var likedIP LikedIPs
-	err := db.QueryRow(getIPlikedOrNot, ip, domain, page).Scan(&likedIP.id,
+	err := db.QueryRow(getIPlikedOrNot, ip, domain, page).Scan(
+		&likedIP.id,
 		&likedIP.IP,
 		&likedIP.Count,
 		&likedIP.Domain,
@@ -89,4 +91,43 @@ func AddDomainAndSettings(db *sql.DB, domain string, likes int, comments int) {
 	if err != nil {
 		log.Printf("Error Adding Domain %s: %v", domain, err)
 	}
+}
+
+func CreatSuperUser(db *sql.DB, email string, passwordHash string) error {
+	_, err := db.Exec(addAdminUser, email, passwordHash)
+	if err != nil {
+		log.Printf("Error Adding Admin User %s: %v", email, err)
+		return err
+	}
+	return nil
+}
+
+func AddUserRequest(db *sql.DB, email string, passwordHash string) error {
+	_, err := db.Exec(accountCreationRequest, email, passwordHash)
+	if err != nil {
+		log.Printf("Error Adding User Request %s: %v", email, err)
+		return err
+	}
+	return nil
+}
+
+func GetUser(db *sql.DB, email string) User {
+	var user User
+	err := db.QueryRow(getUser, email).Scan(
+		&user.id,
+		&user.Email,
+		&user.PasswordHash,
+		&user.userRole,
+		&user.IsActive,
+		&user.userStatus,
+		&user.timestamp)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("DB: User %s, Not Found", email)
+			return User{}
+		}
+		log.Printf("Error Getting User %s: %v", email, err)
+		return User{}
+	}
+	return user
 }

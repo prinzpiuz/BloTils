@@ -27,6 +27,7 @@ func RegisterRoutes(server *server.Server) {
 	lmt := init_rate_limiter()
 	setRoutes(server, "/", local_handlers.IndexPage, http.MethodGet)
 	setRoutes(server, "/clap_counter", local_handlers.ClapCounterPage, http.MethodGet)
+	setRoutes(server, "/create_account", local_handlers.CreateAccountPage, http.MethodGet, http.MethodPost)
 	// API routes
 	setRoutes(server, "/api/v1/ping", local_handlers.Ping, http.MethodGet)
 	setRoutes(server, "/api/v1/count_like", tollbooth.LimitFuncHandler(lmt, local_handlers.GetClaps).ServeHTTP, http.MethodGet, http.MethodPost)

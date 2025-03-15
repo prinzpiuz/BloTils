@@ -2,6 +2,7 @@ package app
 
 import (
 	"BloTils/src/server"
+	"BloTils/src/server/handlers"
 	"BloTils/src/server/routes"
 	"encoding/json"
 	"fmt"
@@ -28,6 +29,11 @@ func (app *App) Start() {
 	app.Server.Start()
 }
 
+func (app *App) CreateAdmin() {
+	logo(app.Config)
+	handlers.CreateAdmin(app.Server.Config.DB.Connection)
+}
+
 func LoadConfig(filepath string) Config {
 	config, err := loadConfigFromFile(filepath)
 	if err != nil {
@@ -41,6 +47,7 @@ func LoadConfig(filepath string) Config {
 	config.BaseDirectory = baseDir
 	config.ServerConfig.BaseDirectory = baseDir
 	config.ServerConfig.DB.DBBaseDirectory = fp.Join(baseDir, "src/db")
+	config.ServerConfig.IsProduction = config.Env == "production"
 	return config
 }
 

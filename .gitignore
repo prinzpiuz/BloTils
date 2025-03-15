@@ -32,3 +32,5 @@ __debug_*
 BloTils.db
 *.db
 *.session.sql
+
+core

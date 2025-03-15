@@ -74,3 +74,46 @@ type LikedIPs struct {
 func (likedIPs LikedIPs) IsEmpty() bool {
 	return likedIPs == LikedIPs{}
 }
+
+// User Roles 1: Admin
+// User Roles 2: Normal User
+// User Status 1: Approved
+// User Status 2: Requested
+// User Status 3: Denied
+type User struct {
+	id           int
+	Email        string
+	PasswordHash string
+	userRole     int
+	IsActive     bool
+	userStatus   int
+	timestamp    time.Time
+}
+
+func (user User) UserExist() bool {
+	return !(user == User{})
+}
+
+func (user User) CheckPassword(passwordHash string) bool {
+	return user.PasswordHash == passwordHash
+}
+
+func (user User) IsAdmin() bool {
+	return user.userRole == 1
+}
+
+func (user User) IsNormalUser() bool {
+	return user.userRole == 2
+}
+
+func (user User) UserStatusApproved() bool {
+	return user.userStatus == 1
+}
+
+func (user User) UserStatusRequested() bool {
+	return user.userStatus == 2
+}
+
+func (user User) UserStatusDenied() bool {
+	return user.userStatus == 2
+}
