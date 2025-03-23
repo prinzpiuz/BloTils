@@ -12,6 +12,8 @@ import (
 	"golang.org/x/term"
 )
 
+const UserHandler = "UserHandler"
+
 // CreateAccountPage renders the HTML template for the account creation page.
 func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 
@@ -28,15 +30,13 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 		}
 		email := r.FormValue("email")
 		password := r.FormValue("password")
-		confirmPassword := r.FormValue("confirm_password")
+		confirmPassword := r.FormValue("confirmPassword")
 		db_connection := get_db_connection(r)
 		isEmailValidated, msg1 := userEmailValidated(db_connection, email)
 		isValidPassword, msg2 := checkeckPassword(password, confirmPassword)
-		errorMessages := []string{msg1, msg2}
 		if !isEmailValidated || !isValidPassword {
-			userTemplateData := errorAndMessages{ErrorMsg: errorMessages}
 			templateData := set_common_template_data(TemplateData{}, r, w)
-			templateData.Data = userTemplateData
+			templateData.Errors = []string{msg1, msg2}
 			generateHTML(w, templateData, "layout", "create_account")
 			return
 		}
@@ -48,9 +48,9 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, msg, http.StatusInternalServerError)
 		}
 		log.Printf("Succesfully Added user request %s", email)
-		// success message
-		//sucess page
-
+		msg := `Account Creation Request Processed Succesfully <br>
+								Wait for approval from admin`
+		sendMessagePage(r, w, msg)
 	}
 }
 
@@ -112,4 +112,102 @@ func CreateAdmin(db_connection *sql.DB) {
 		fmt.Printf("Email Validations Failed\n,Error: %s", msg)
 	}
 
+}
+
+func ResetPassword(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		templateData := set_common_template_data(TemplateData{}, r, w)
+		generateHTML(w, templateData, "layout", "forgot_password")
+	case http.MethodPost:
+		err := r.ParseForm()
+		if err != nil {
+			log.Printf("Error Parsing Form: %v", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		email := r.FormValue("email")
+		db_connection := get_db_connection(r)
+		user := db.GetUser(db_connection, email)
+		if user.UserExist() {
+			token := generateSecureToken()
+			err := db.SetRestToken(db_connection, token, user.Id)
+			if err == nil {
+				resetPasswordMail(email, token)
+				msg := `You'll recive your reset link in mail, if your email is verified`
+				sendMessagePage(r, w, msg)
+				return
+			}
+			log.Print("Failed To Save Reset Password Token")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		log.Printf("User %s Not Exist", email)
+	}
+}
+
+func validateToken(w http.ResponseWriter, r *http.Request, token string) db.PasswordResetToken {
+	db_connection := get_db_connection(r)
+	tokenObj := db.GetTokenUser(db_connection, token)
+	if !tokenObj.IsValid() {
+		setHTTPError(w, InvalidToken, UserHandler, http.StatusUnauthorized)
+		return db.PasswordResetToken{}
+	}
+	return tokenObj
+}
+
+func ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		token := getUrlVars(r, "token")
+		tokenObj := validateToken(w, r, token)
+		if tokenObj.IsEmpty() {
+			return
+		}
+		templateData := set_common_template_data(TemplateData{}, r, w)
+		templateData.Data = map[string]interface{}{"tokenObj": tokenObj}
+		generateHTML(w, templateData, "layout", "reset_password")
+	case http.MethodPost:
+		err := r.ParseForm()
+		if err != nil {
+			log.Printf("Error Parsing Form: %v", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		token := r.FormValue("reset_token")
+		tokenObj := validateToken(w, r, token)
+		if tokenObj.IsEmpty() {
+			return
+		}
+		password := r.FormValue("password")
+		confirmPassword := r.FormValue("confirmPassword")
+		isValidPassword, msg := checkeckPassword(password, confirmPassword)
+		if !isValidPassword {
+			templateData := set_common_template_data(TemplateData{}, r, w)
+			templateData.Errors = []string{msg}
+			templateData.Data = map[string]interface{}{"tokenObj": tokenObj}
+			generateHTML(w, templateData, "layout", "reset_password")
+			return
+
+		}
+		passwordHash := passwordHash(password)
+		db_connection := get_db_connection(r)
+		err = db.DeleteTokenAndSetPassword(db_connection, tokenObj.Token, passwordHash, tokenObj.User.Id)
+		if err != nil {
+			log.Printf("Failed to update password for user %s", tokenObj.User.Email)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		sendMessagePage(r, w, "Password Reset Successfull")
+		log.Printf("Password Reset Successfully for user %s", tokenObj.User.Email)
+	}
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		templateData := set_common_template_data(TemplateData{}, r, w)
+		generateHTML(w, templateData, "layout", "login")
+	case http.MethodPost:
+
+	}
 }

@@ -34,3 +34,5 @@ BloTils.db
 *.session.sql
 
 core
+
+.env

@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-const handlerReference = "ClapCounter"
+const ClapCounterHandler = "ClapCounter"
 
 // Message constants for ClapCounter
 const (
@@ -120,7 +120,7 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 	if domain_check_err != nil {
 		continue_counting = false
 		clapCounter.SetClapCounter(clapCounter.URL, domain_check_err.Error(), 0, false)
-		setHTTPError(w, UnAuthorized, handlerReference, http.StatusForbidden)
+		setHTTPError(w, UnAuthorized, ClapCounterHandler, http.StatusForbidden)
 	}
 	if continue_counting {
 		likes := get_likes(r, clapCounter)
@@ -135,13 +135,13 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					log.Printf("Error Updating Like Count: %v", err)
 					clapCounter.SetClapCounter(clapCounter.URL, ClapCountedFailed, likes.Count, false)
-					setHTTPError(w, Internal, handlerReference, http.StatusInternalServerError)
+					setHTTPError(w, Internal, ClapCounterHandler, http.StatusInternalServerError)
 				}
 				clapCounter.SetClapCounter(clapCounter.URL, ClapCountedSuccess, likes.Count+1, true)
 			}
 			update_ip_like_count(r, clapCounter)
 		default:
-			setHTTPError(w, MethodNotAllowed, handlerReference, http.StatusMethodNotAllowed)
+			setHTTPError(w, MethodNotAllowed, ClapCounterHandler, http.StatusMethodNotAllowed)
 		}
 	}
 	jsonData, err := json.Marshal(clapCounter)

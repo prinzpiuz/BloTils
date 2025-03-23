@@ -81,7 +81,7 @@ func (likedIPs LikedIPs) IsEmpty() bool {
 // User Status 2: Requested
 // User Status 3: Denied
 type User struct {
-	id           int
+	Id           int
 	Email        string
 	PasswordHash string
 	userRole     int
@@ -116,4 +116,27 @@ func (user User) UserStatusRequested() bool {
 
 func (user User) UserStatusDenied() bool {
 	return user.userStatus == 2
+}
+
+type PasswordResetToken struct {
+	Token      string
+	User       User
+	ExpiryTime time.Time
+	Used       bool
+}
+
+func (prt PasswordResetToken) IsEmpty() bool {
+	return prt == PasswordResetToken{}
+}
+
+func (prt PasswordResetToken) IsExpired() bool {
+	return prt.ExpiryTime.Before(time.Now())
+}
+
+func (prt PasswordResetToken) IsUsed() bool {
+	return prt.Used
+}
+
+func (prt PasswordResetToken) IsValid() bool {
+	return !prt.IsExpired() && !prt.IsUsed() && !prt.IsEmpty()
 }

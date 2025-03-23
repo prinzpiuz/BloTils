@@ -5,6 +5,7 @@ package db
 import (
 	"database/sql"
 	"log"
+	"time"
 )
 
 // GetDomain retrieves a Domain from the database by the given domain_name.
@@ -114,7 +115,7 @@ func AddUserRequest(db *sql.DB, email string, passwordHash string) error {
 func GetUser(db *sql.DB, email string) User {
 	var user User
 	err := db.QueryRow(getUser, email).Scan(
-		&user.id,
+		&user.Id,
 		&user.Email,
 		&user.PasswordHash,
 		&user.userRole,
@@ -130,4 +131,43 @@ func GetUser(db *sql.DB, email string) User {
 		return User{}
 	}
 	return user
+}
+
+func SetRestToken(db *sql.DB, token string, userId int) error {
+	expiryTime := time.Now().Add(10 * time.Minute)
+	_, err := db.Exec(addResetToken, token, userId, expiryTime)
+	if err != nil {
+		log.Printf("Error Saving Reset Token For %d: %v", userId, err)
+		return err
+	}
+	return nil
+}
+
+func GetTokenUser(db *sql.DB, token string) PasswordResetToken {
+	var tokenObj PasswordResetToken
+	err := db.QueryRow(getTokenUser, token).Scan(&tokenObj.Token,
+		&tokenObj.User.Id,
+		&tokenObj.ExpiryTime,
+		&tokenObj.Used,
+		&tokenObj.User.Id,
+		&tokenObj.User.Email,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("DB: Token %s, Not Found", token)
+			return PasswordResetToken{}
+		}
+		log.Printf("Error Getting User By Token %s: %v", token, err)
+		return PasswordResetToken{}
+	}
+	return tokenObj
+}
+
+func DeleteTokenAndSetPassword(db *sql.DB, token string, passwordHash string, userId int) error {
+	_, err := db.Exec(resetTokenAndUpdatePassword, token, passwordHash, userId)
+	if err != nil {
+		log.Printf("Error Resetting Password For User %d err:%v", userId, err)
+		return err
+	}
+	return nil
 }

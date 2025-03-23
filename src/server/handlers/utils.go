@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,6 +35,7 @@ var (
 	BadGateway       = errors.New("Bad Gateway")
 	Service          = errors.New("Service Unavailable")
 	MethodNotAllowed = errors.New("Method Not Allowed")
+	InvalidToken     = errors.New("Invalid Token")
 )
 
 // check_for_request_content_type checks the Content-Type header of the incoming HTTP request
@@ -212,8 +214,12 @@ func getCookie(r *http.Request, name string) (*http.Cookie, error) {
 // This function is used to ensure that the "favicon" template is always included when rendering
 // HTML templates.
 func add_common_files(files []string) []string {
-	const html_location = "templates/%s.html"
-	return append(files, fmt.Sprintf(html_location, "favicon"))
+	const htmlLocation = "templates/%s.html"
+	commonFiles := []string{"favicon", "error_layout", "message_layout", "password"}
+	for _, file := range commonFiles {
+		files = append(files, fmt.Sprintf(htmlLocation, file))
+	}
+	return files
 }
 
 type TemplateData struct {
@@ -221,7 +227,9 @@ type TemplateData struct {
 	MetaDesc  string
 	Static    string
 	CSRFToken string
-	Data      interface{}
+	Messages  []string
+	Errors    []string
+	Data      map[string]interface{}
 }
 
 // set_template_data sets the default title and meta description for the template data if they are not already set.
@@ -293,16 +301,34 @@ func isValidEmail(email string) bool {
 	return re.MatchString(email)
 }
 
-// New CSRF token generation
-func generateCSRFToken(r *http.Request, w http.ResponseWriter) string {
+// generateSecureToken creates a cryptographically secure random token
+// by generating 32 random bytes and encoding them as a URL-safe base64 string.
+// Returns a unique, random token suitable for use in security-sensitive contexts.
+func generateSecureToken() string {
 	b := make([]byte, 32)
 	rand.Read(b)
-	csrfToken := base64.URLEncoding.EncodeToString(b)
+	return base64.URLEncoding.EncodeToString(b)
+}
+
+// New CSRF token generation
+func generateCSRFToken(r *http.Request, w http.ResponseWriter) string {
+	csrfToken := generateSecureToken()
 	setCookie(r, w, "csrf_token", csrfToken, time.Now().Add(5*time.Minute))
 	return csrfToken
 }
 
-type errorAndMessages struct {
-	ErrorMsg       []string
-	CommonMessages []string
+// sendMessagePage renders a message page with a single message using the provided HTTP request and response writer.
+// It sets common template data, adds the specified message, and generates an HTML page using the "layout" and "message_page" templates.
+func sendMessagePage(r *http.Request, w http.ResponseWriter, msg string) {
+	templateData := set_common_template_data(TemplateData{}, r, w)
+	templateData.Messages = []string{msg}
+	generateHTML(w, templateData, "layout", "message_page")
+}
+
+// getUrlVars retrieves a specific URL variable from an HTTP request using Gorilla Mux.
+// It takes an HTTP request and the name of the variable to extract.
+// Returns the value of the specified URL variable as a string.
+func getUrlVars(r *http.Request, variable string) string {
+	vars := mux.Vars(r)
+	return vars[variable]
 }

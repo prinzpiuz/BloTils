@@ -1,0 +1,9 @@
+{{if .Messages }}
+<div class="messages" id="messages">
+  <ul>
+    {{range .Messages}}
+    <li>{{ . }}</li>
+    {{end}}
+  </ul>
+</div>
+{{ end }}

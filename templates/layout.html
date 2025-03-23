@@ -12,7 +12,11 @@
     <title>BloTils</title>
   </head>
   <body>
-    <div class="container">{{ template "content" . }}</div>
+    <div class="container">
+        {{ template "message_layout.html" . }}
+        {{ template "content" . }}
+        {{ template "error_layout.html" . }}
+    </div>
   </body>
 </html>
 
