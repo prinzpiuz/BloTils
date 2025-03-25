@@ -19,29 +19,24 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		templateData := set_common_template_data(TemplateData{}, r, w)
+		templateData := setCommonTemplateTata(TemplateData{}, r, w)
 		generateHTML(w, templateData, "layout", "create_account")
 	case http.MethodPost:
-		err := r.ParseForm()
-		if err != nil {
-			log.Printf("Error Parsing Form: %v", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		parseForm(r, w)
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 		confirmPassword := r.FormValue("confirmPassword")
-		db_connection := get_db_connection(r)
+		db_connection := GetDbConnection(r)
 		isEmailValidated, msg1 := userEmailValidated(db_connection, email)
 		isValidPassword, msg2 := checkeckPassword(password, confirmPassword)
 		if !isEmailValidated || !isValidPassword {
-			templateData := set_common_template_data(TemplateData{}, r, w)
+			templateData := setCommonTemplateTata(TemplateData{}, r, w)
 			templateData.Errors = []string{msg1, msg2}
 			generateHTML(w, templateData, "layout", "create_account")
 			return
 		}
 		passwordHash := passwordHash(password)
-		err = db.AddUserRequest(db_connection, email, passwordHash)
+		err := db.AddUserRequest(db_connection, email, passwordHash)
 		if err != nil {
 			msg := fmt.Sprintf("Error: Adding user request %s to DB failed", email)
 			log.Printf(msg)
@@ -87,7 +82,7 @@ func CreateAdmin(db_connection *sql.DB) {
 	fmt.Print("Email: ")
 	fmt.Scanln(&email)
 	isEmailValidated, msg := userEmailValidated(db_connection, email)
-	if !isEmailValidated {
+	if isEmailValidated {
 		fmt.Println("Note: Create A Strong Password")
 		fmt.Print("Password: ")
 		bytePassword, _ := term.ReadPassword(int(syscall.Stdin))
@@ -114,20 +109,15 @@ func CreateAdmin(db_connection *sql.DB) {
 
 }
 
-func ResetPassword(w http.ResponseWriter, r *http.Request) {
+func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		templateData := set_common_template_data(TemplateData{}, r, w)
+		templateData := setCommonTemplateTata(TemplateData{}, r, w)
 		generateHTML(w, templateData, "layout", "forgot_password")
 	case http.MethodPost:
-		err := r.ParseForm()
-		if err != nil {
-			log.Printf("Error Parsing Form: %v", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		parseForm(r, w)
 		email := r.FormValue("email")
-		db_connection := get_db_connection(r)
+		db_connection := GetDbConnection(r)
 		user := db.GetUser(db_connection, email)
 		if user.UserExist() {
 			token := generateSecureToken()
@@ -146,7 +136,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func validateToken(w http.ResponseWriter, r *http.Request, token string) db.PasswordResetToken {
-	db_connection := get_db_connection(r)
+	db_connection := GetDbConnection(r)
 	tokenObj := db.GetTokenUser(db_connection, token)
 	if !tokenObj.IsValid() {
 		setHTTPError(w, InvalidToken, UserHandler, http.StatusUnauthorized)
@@ -155,7 +145,7 @@ func validateToken(w http.ResponseWriter, r *http.Request, token string) db.Pass
 	return tokenObj
 }
 
-func ForgotPassword(w http.ResponseWriter, r *http.Request) {
+func ResetPassword(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		token := getUrlVars(r, "token")
@@ -163,16 +153,11 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		if tokenObj.IsEmpty() {
 			return
 		}
-		templateData := set_common_template_data(TemplateData{}, r, w)
+		templateData := setCommonTemplateTata(TemplateData{}, r, w)
 		templateData.Data = map[string]interface{}{"tokenObj": tokenObj}
 		generateHTML(w, templateData, "layout", "reset_password")
 	case http.MethodPost:
-		err := r.ParseForm()
-		if err != nil {
-			log.Printf("Error Parsing Form: %v", err.Error())
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		parseForm(r, w)
 		token := r.FormValue("reset_token")
 		tokenObj := validateToken(w, r, token)
 		if tokenObj.IsEmpty() {
@@ -182,7 +167,7 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		confirmPassword := r.FormValue("confirmPassword")
 		isValidPassword, msg := checkeckPassword(password, confirmPassword)
 		if !isValidPassword {
-			templateData := set_common_template_data(TemplateData{}, r, w)
+			templateData := setCommonTemplateTata(TemplateData{}, r, w)
 			templateData.Errors = []string{msg}
 			templateData.Data = map[string]interface{}{"tokenObj": tokenObj}
 			generateHTML(w, templateData, "layout", "reset_password")
@@ -190,8 +175,8 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 
 		}
 		passwordHash := passwordHash(password)
-		db_connection := get_db_connection(r)
-		err = db.DeleteTokenAndSetPassword(db_connection, tokenObj.Token, passwordHash, tokenObj.User.Id)
+		db_connection := GetDbConnection(r)
+		err := db.DeleteTokenAndSetPassword(db_connection, tokenObj.Token, passwordHash, tokenObj.User.Id)
 		if err != nil {
 			log.Printf("Failed to update password for user %s", tokenObj.User.Email)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -205,9 +190,51 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 func Login(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		templateData := set_common_template_data(TemplateData{}, r, w)
+		templateData := setCommonTemplateTata(TemplateData{}, r, w)
 		generateHTML(w, templateData, "layout", "login")
 	case http.MethodPost:
+		parseForm(r, w)
+		email := r.FormValue("email")
+		password := r.FormValue("password")
+		db_connection := GetDbConnection(r)
+		user := db.GetUser(db_connection, email)
+		if validLogin(user, password) {
+			sessionToken := generateSessionToken(r, w)
+			err := db.CreateSession(db_connection, sessionToken, user.Id)
+			if err != nil {
+				log.Printf("Error: Creating session for user %s failed", email)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if user.IsAdmin() {
+				http.Redirect(w, r, "/admin", http.StatusSeeOther)
+				return
+			}
+			http.Redirect(w, r, "/home", http.StatusSeeOther)
+			return
+		}
+		log.Print("Error: Invalid Login")
+		templateData := setCommonTemplateTata(TemplateData{}, r, w)
+		msg := "Invalid Email or Password"
+		templateData.Errors = []string{msg}
+		generateHTML(w, templateData, "layout", "login")
+		return
 
 	}
+}
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+	db_connection := GetDbConnection(r)
+	sessionData := GetSessionData(r)
+	if sessionData.IsEmpty() {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	err := db.DeleteSession(db_connection, sessionData.User.Id)
+	if err != nil {
+		log.Printf("Error: Deleting session for user %s failed", sessionData.User.Email)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

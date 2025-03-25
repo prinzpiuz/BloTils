@@ -3,37 +3,90 @@ package routes
 
 import (
 	"BloTils/src/server"
-	local_handlers "BloTils/src/server/handlers"
+	localHandlers "BloTils/src/server/handlers"
 	"net/http"
-	"os"
 	"time"
 
-	"github.com/didip/tollbooth/v8"
+	tollbooth "github.com/didip/tollbooth/v8"
 	"github.com/didip/tollbooth/v8/limiter"
-	"github.com/gorilla/handlers"
 )
-
-// setRoutes registers the given handler function for the specified path and HTTP
-// methods on the provided server. It uses gorilla/mux for routing and
-// gorilla/handlers for logging.
-func setRoutes(server *server.Server, path string, handler http.HandlerFunc, methods ...string) {
-	server.Router.Handle(path, handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(handler))).Methods(methods...)
-}
 
 // RegisterRoutes registers the API routes for the server.
 // It calls setRoutes to add each route, specifying the path, handler function,
 // and HTTP methods allowed.
-func RegisterRoutes(server *server.Server) {
+func RegisterRoutes(s *server.Server) {
 	lmt := init_rate_limiter()
-	setRoutes(server, "/", local_handlers.IndexPage, http.MethodGet)
-	setRoutes(server, "/clap_counter", local_handlers.ClapCounterPage, http.MethodGet)
-	setRoutes(server, "/create_account", local_handlers.CreateAccountPage, http.MethodGet, http.MethodPost)
-	setRoutes(server, "/forgot_password", local_handlers.ResetPassword, http.MethodGet, http.MethodPost)
-	setRoutes(server, "/reset_password/{token}", local_handlers.ForgotPassword, http.MethodGet, http.MethodPost)
-	setRoutes(server, "/login", local_handlers.Login, http.MethodGet, http.MethodPost)
+	s.SetRoute(server.RouteDetails{
+		Path:          "/",
+		Handler:       localHandlers.IndexPage,
+		Methods:       []string{http.MethodGet},
+		AdminRequired: false,
+		LoginRequired: false,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/clap_counter",
+		Handler:       localHandlers.ClapCounterPage,
+		Methods:       []string{http.MethodGet},
+		AdminRequired: false,
+		LoginRequired: false,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/create_account",
+		Handler:       localHandlers.CreateAccountPage,
+		Methods:       []string{http.MethodGet, http.MethodPost},
+		AdminRequired: false,
+		LoginRequired: false,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/forgot_password",
+		Handler:       localHandlers.ForgotPassword,
+		Methods:       []string{http.MethodGet, http.MethodPost},
+		AdminRequired: false,
+		LoginRequired: false,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/reset_password/{token}",
+		Handler:       localHandlers.ResetPassword,
+		Methods:       []string{http.MethodGet, http.MethodPost},
+		AdminRequired: false,
+		LoginRequired: false,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/login",
+		Handler:       localHandlers.Login,
+		Methods:       []string{http.MethodGet, http.MethodPost},
+		AdminRequired: false,
+		LoginRequired: false,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/logout",
+		Handler:       localHandlers.Logout,
+		Methods:       []string{http.MethodGet},
+		AdminRequired: false,
+		LoginRequired: true,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/admin",
+		Handler:       localHandlers.AdminPage,
+		Methods:       []string{http.MethodGet, http.MethodPost},
+		AdminRequired: true,
+		LoginRequired: true,
+	})
 	// API routes
-	setRoutes(server, "/api/v1/ping", local_handlers.Ping, http.MethodGet)
-	setRoutes(server, "/api/v1/count_like", tollbooth.LimitFuncHandler(lmt, local_handlers.GetClaps).ServeHTTP, http.MethodGet, http.MethodPost)
+	s.SetRoute(server.RouteDetails{
+		Path:          "/api/v1/ping",
+		Handler:       localHandlers.Ping,
+		Methods:       []string{http.MethodGet},
+		AdminRequired: false,
+		LoginRequired: false,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/api/v1/count_like",
+		Handler:       tollbooth.LimitFuncHandler(lmt, localHandlers.GetClaps).ServeHTTP,
+		Methods:       []string{http.MethodGet, http.MethodPost},
+		AdminRequired: false,
+		LoginRequired: false,
+	})
 }
 
 // init_rate_limiter creates a new rate limiter with a limit of 1 request per hour.

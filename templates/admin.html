@@ -1,0 +1,29 @@
+{{ define "content" }}
+
+<div class="user-list-container">
+  <h2>User Listing</h2>
+  <table class="user-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Data.users }}
+      <tr>
+        <td>{{ .Id }}</td>
+        <td>{{ .Email }}</td>
+        <td>{{ .UserRole }}</td>
+        <td>Active</td>
+        <td><a href="#">Edit</a> | <a href="#">Delete</a></td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</div>
+
+{{ end }}

@@ -1,7 +1,9 @@
 // Package db provides functionality for interacting with the application's database.
 package db
 
-import "time"
+import (
+	"time"
+)
 
 // DomainSettings represents the settings for a domain, including whether likes and comments are enabled,
 // and the timestamp of the last update.
@@ -118,6 +120,16 @@ func (user User) UserStatusDenied() bool {
 	return user.userStatus == 2
 }
 
+func (user User) UserRole() string {
+	switch user.userRole {
+	case 1:
+		return "Admin"
+	case 2:
+		return "Normal User"
+	}
+	return "Unknown"
+}
+
 type PasswordResetToken struct {
 	Token      string
 	User       User
@@ -139,4 +151,19 @@ func (prt PasswordResetToken) IsUsed() bool {
 
 func (prt PasswordResetToken) IsValid() bool {
 	return !prt.IsExpired() && !prt.IsUsed() && !prt.IsEmpty()
+}
+
+type Session struct {
+	SessionId string
+	User      User
+	timestamp time.Time
+	Expiry    time.Time
+}
+
+func (session Session) IsEmpty() bool {
+	return session == Session{}
+}
+
+func (session Session) IsExpired() bool {
+	return session.Expiry.Before(time.Now())
 }

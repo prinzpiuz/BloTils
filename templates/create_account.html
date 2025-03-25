@@ -8,7 +8,7 @@
     method="POST"
     onsubmit="return validateForm()"
   >
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+    <input type="hidden" name="csrfToken" value="{{.CSRFToken}}" />
     <div class="form-group">
       <label for="email">Email</label>
       <input type="email" id="email" name="email" required />

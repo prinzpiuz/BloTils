@@ -171,3 +171,85 @@ func DeleteTokenAndSetPassword(db *sql.DB, token string, passwordHash string, us
 	}
 	return nil
 }
+
+func GetSession(db *sql.DB, sessionId string) Session {
+	var session Session
+	err := db.QueryRow(getSessionUser, sessionId).Scan(
+		&session.SessionId,
+		&session.User.Id,
+		&session.User.Email,
+		&session.User.userRole,
+		&session.User.IsActive,
+		&session.User.userStatus,
+		&session.User.timestamp,
+		&session.User.Id,
+		&session.timestamp,
+		&session.Expiry,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("DB: Session %s, Not Found", sessionId)
+			return Session{}
+		}
+		log.Printf("Error Getting User By Session %s: %v", sessionId, err)
+		return Session{}
+	}
+	return session
+}
+
+func CreateSession(db *sql.DB, sessionId string, userId int) error {
+	expiryTime := time.Now().Add(24 * time.Hour) //todo: change to 30 days
+	_, err := db.Exec(createSession, sessionId, userId, expiryTime)
+	if err != nil {
+		log.Printf("Error Adding Session %s For User %d: %v", sessionId, userId, err)
+		return err
+	}
+	return nil
+}
+
+func DeleteSession(db *sql.DB, userId int) error {
+	_, err := db.Exec(deleteUserSessions, userId)
+	if err != nil {
+		log.Printf("Error Deleting Session For User %d: %v", userId, err)
+		return err
+	}
+	return nil
+}
+
+func DeleteSessionWithSessionId(db *sql.DB, sessionId string) error {
+	_, err := db.Exec(deleteSession, sessionId)
+	if err != nil {
+		log.Printf("Error Deleting Session %s: %v", sessionId, err)
+		return err
+	}
+	return nil
+}
+
+func GetAllUsers(db *sql.DB) []User {
+	var users []User
+	rows, err := db.Query(getAllusers)
+	defer rows.Close()
+	if err == sql.ErrNoRows {
+		log.Print("No Users Found")
+		return nil
+	} else if err != nil {
+		log.Printf("Error Querying Database: %v", err)
+		return nil
+	}
+	for rows.Next() {
+		var user User
+		err := rows.Scan(&user.Id, &user.Email, &user.userRole, &user.IsActive, &user.userStatus, &user.timestamp)
+		if err != nil {
+			log.Printf("Scaning Rows Failed: %v", err)
+			return nil
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Iteration Failed: %v", err)
+		return nil
+	}
+	return users
+
+}

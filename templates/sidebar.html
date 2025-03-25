@@ -1,0 +1,18 @@
+{{if .Session }}
+<div class="sidebar">
+  <div class="user-info">
+    <p>{{.Session.User.Email }}</p>
+    <p><a href="/logout">Logout</a></p>
+  </div>
+  <div class="sidebar-menu">
+    <ul>
+      <li><a href="/admin">Users</a></li>
+      <li><a href="#">Sites</a></li>
+      <li><a href="#">Analytics</a></li>
+    </ul>
+  </div>
+  <div class="app-version">
+    <p>Version: 1.0.0</p>
+  </div>
+</div>
+{{ end }}

@@ -14,19 +14,20 @@ const getDomain = `SELECT * FROM Domain
 // provided domain. It joins the Likes table with the Domain table to
 // retrieve the domain information.
 const getLikes = `SELECT
-				  Likes.id,
-				  Likes.uri,
-				  Likes.domain_id,
-				  Likes.count,
-				  Domain.id,
-				  Domain.settings_id,
-				  Domain.domain,
-				  Domain.created_time
-				  FROM Likes
-				  JOIN Domain
-				  ON Likes.domain_id = Domain.id
-				  WHERE Domain.domain = ?
-				  AND Likes.uri = ?`
+				   Likes.id,
+				   Likes.uri,
+				   Likes.domain_id,
+				   Likes.count,
+				   Domain.id,
+				   Domain.settings_id,
+				   Domain.domain,
+				   Domain.created_time
+				 FROM
+				   Likes
+				 JOIN Domain ON Likes.domain_id = Domain.id
+				 WHERE
+				  Domain.domain = ?
+				 AND Likes.uri = ?`
 
 // getIPlikedOrNot is a SQL query that selects all rows from the Liked_IPs table
 // where the ip, path, and domain columns match the provided parameters. This query
@@ -102,6 +103,10 @@ const resetTokenAndUpdatePassword = `BEGIN TRANSACTION;
 									 WHERE id = ?;
 									 COMMIT TRANSACTION;`
 
+// getTokenUser is a SQL query that retrieves password reset token details along with associated user information.
+// The query selects the token, user ID, expiry time, usage status, user ID, and email from the PasswordResetToken
+// and User tables. It joins the tables on user ID and filters for an unused token, allowing verification
+// of a valid, unused password reset token for a specific user.
 const getTokenUser = `SELECT prt.token,
 							prt.user_id,
 							prt.expiry_time,
@@ -113,3 +118,54 @@ const getTokenUser = `SELECT prt.token,
          			 ON u.id = prt.user_id
 					 WHERE  prt.token = ?
        				 AND prt.used = 0 `
+
+// getSessionUser is a SQL query that retrieves comprehensive user and session details
+// by joining the Sessions and User tables. The query selects session ID, user information,
+// and session metadata, filtered by a specific session ID. It allows retrieving full
+// user context associated with an active session.
+const getSessionUser = `SELECT
+						 s.session_id,
+						 u.id,
+						 u.email,
+						 u.user_role,
+						 u.is_active,
+						 u.user_status,
+						 u.created_time,
+						 s.user_id,
+						 s.created_time,
+						 s.expiry_time
+						FROM
+						 Sessions s
+						JOIN User u ON s.user_id = u.id
+						WHERE
+						 s.session_id = ?`
+
+// createSession is a SQL query that inserts a new session record into the Sessions table
+// with the provided session ID, user ID, and expiration time. The query uses placeholders
+// to allow dynamic session creation for user authentication and tracking.
+const createSession = `INSERT INTO Sessions (session_id, user_id, expiry_time)
+					   VALUES (?, ?, ?)`
+
+// deleteUserSessions is a SQL query that removes all session records associated with a specific user ID
+// from the Sessions table. This query is typically used when invalidating or cleaning up a user's
+// active sessions, such as during logout or account management operations.
+const deleteUserSessions = `DELETE FROM Sessions
+					   WHERE user_id = ?`
+
+// deleteSession is a SQL query that removes a specific session record from the Sessions table
+// by matching the provided session ID. This query is used to invalidate or terminate
+// an individual user session, typically during logout or session expiration processes.
+const deleteSession = `DELETE FROM Sessions
+					   WHERE session_id = ?`
+
+const getAllusers = `SELECT
+					  u.id,
+					  u.email,
+					  u.user_role,
+					  u.is_active,
+					  u.user_status,
+					  u.created_time
+					FROM
+					  User u
+					ORDER BY
+					  created_time DESC`

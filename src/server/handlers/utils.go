@@ -38,10 +38,17 @@ var (
 	InvalidToken     = errors.New("Invalid Token")
 )
 
+const (
+	SessionExpiry = 24 * time.Hour
+	CSRFExpiry    = 5 * time.Minute
+	SessionCookie = "sessionID"
+	CSRFCookie    = "csrfToken"
+)
+
 // check_for_request_content_type checks the Content-Type header of the incoming HTTP request
 // and returns an error if it is not "application/json". This ensures that the server only
 // accepts JSON-encoded request bodies.
-func check_for_request_content_type(w http.ResponseWriter, r *http.Request) error {
+func checkForRequestContentType(w http.ResponseWriter, r *http.Request) error {
 	ct := r.Header.Get("Content-Type")
 	if ct != "" {
 		mediaType := strings.ToLower(strings.TrimSpace(strings.Split(ct, ";")[0]))
@@ -57,7 +64,7 @@ func check_for_request_content_type(w http.ResponseWriter, r *http.Request) erro
 // decode_request is a utility function that decodes the request body into the provided destination interface.
 // If there is an error decoding the request body, it will log the error and write an appropriate HTTP error response.
 // The function returns the error, if any, from the decoding process.
-func decode_request(r *http.Request, w http.ResponseWriter, dst interface{}) error {
+func decodeRequest(r *http.Request, w http.ResponseWriter, dst interface{}) error {
 	decode := json.NewDecoder(r.Body)
 	err := decode.Decode(&dst)
 	var msg string
@@ -97,7 +104,7 @@ func decode_request(r *http.Request, w http.ResponseWriter, dst interface{}) err
 
 // get_db_connection returns the database connection stored in the server configuration
 // context. If the configuration is not available, it returns nil.
-func get_db_connection(r *http.Request) *sql.DB {
+func GetDbConnection(r *http.Request) *sql.DB {
 	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
 	if ok && serverConfig != nil {
 		return serverConfig.DB.Connection
@@ -105,7 +112,7 @@ func get_db_connection(r *http.Request) *sql.DB {
 	return nil
 }
 
-func get_domain(url_string string) string {
+func getDomain(url_string string) string {
 	url, err := url.Parse(url_string)
 	if err != nil {
 		msg := fmt.Sprintf("Error parsing URL: %s", url_string)
@@ -122,8 +129,8 @@ func get_domain(url_string string) string {
 //     If likes are not enabled, it returns an error with a log message.
 //
 // If all checks pass, it returns nil.
-func check_for_domain(r *http.Request, domain_name string, context any) (db.Domain, error) {
-	db_connection := get_db_connection(r)
+func checkForDomain(r *http.Request, domain_name string, context any) (db.Domain, error) {
+	db_connection := GetDbConnection(r)
 	domain := db.GetDomain(db_connection, domain_name)
 	if domain.IsEmpty() {
 		msg := "This Domain(%s) Is Not Configured For Blotils"
@@ -153,7 +160,7 @@ func setHTTPError(w http.ResponseWriter, err error, reference string, httpStatus
 // get_path extracts the path from the query string of the given HTTP request.
 // If there is an error parsing the query string, it sets an HTTP error response
 // and returns an empty string.
-func get_path(r *http.Request, w http.ResponseWriter) string {
+func getPath(r *http.Request, w http.ResponseWriter) string {
 	q, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		setHTTPError(w, err, "Error Parsing Query", http.StatusBadRequest)
@@ -193,29 +200,12 @@ func setCookie(r *http.Request, w http.ResponseWriter, name string, value string
 
 }
 
-// getCookie retrieves the value of the cookie with the given name from the provided HTTP request.
-// If the cookie is not found, it returns an error. If there is any other error retrieving the
-// cookie, it wraps the error and returns it.
-func getCookie(r *http.Request, name string) (*http.Cookie, error) {
-	cookie, err := r.Cookie(name)
-	if err != nil {
-		switch {
-		case errors.Is(err, http.ErrNoCookie):
-			err = fmt.Errorf("Cookie Not Found")
-		default:
-			err = fmt.Errorf(err.Error())
-		}
-		return nil, err
-	}
-	return cookie, nil
-}
-
 // add_common_files appends the "favicon" template file to the given list of HTML template files.
 // This function is used to ensure that the "favicon" template is always included when rendering
 // HTML templates.
-func add_common_files(files []string) []string {
+func addCommonFiles(files []string) []string {
 	const htmlLocation = "templates/%s.html"
-	commonFiles := []string{"favicon", "error_layout", "message_layout", "password"}
+	commonFiles := []string{"favicon", "error_layout", "message_layout", "password", "sidebar", "footer", "topbar"}
 	for _, file := range commonFiles {
 		files = append(files, fmt.Sprintf(htmlLocation, file))
 	}
@@ -229,13 +219,14 @@ type TemplateData struct {
 	CSRFToken string
 	Messages  []string
 	Errors    []string
+	Session   *db.Session
 	Data      map[string]interface{}
 }
 
 // set_template_data sets the default title and meta description for the template data if they are not already set.
 // It also sets the static file path from the server configuration.
 // The updated template data is returned.
-func set_common_template_data(data TemplateData, r *http.Request, w http.ResponseWriter) TemplateData {
+func setCommonTemplateTata(data TemplateData, r *http.Request, w http.ResponseWriter) TemplateData {
 	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
 	if ok && serverConfig != nil {
 		if data.Title == "" {
@@ -265,7 +256,7 @@ func generateHTML(w http.ResponseWriter, data TemplateData, filenames ...string)
 	for _, file := range filenames {
 		files = append(files, fmt.Sprintf("templates/%s.html", file))
 	}
-	files = add_common_files(files)
+	files = addCommonFiles(files)
 	templates := template.Must(template.ParseFiles(files...))
 	err := templates.ExecuteTemplate(w, "layout", data)
 	if err != nil {
@@ -313,14 +304,20 @@ func generateSecureToken() string {
 // New CSRF token generation
 func generateCSRFToken(r *http.Request, w http.ResponseWriter) string {
 	csrfToken := generateSecureToken()
-	setCookie(r, w, "csrf_token", csrfToken, time.Now().Add(5*time.Minute))
+	setCookie(r, w, CSRFCookie, csrfToken, time.Now().Add(CSRFExpiry))
 	return csrfToken
+}
+
+func generateSessionToken(r *http.Request, w http.ResponseWriter) string {
+	sessionToken := generateSecureToken()
+	setCookie(r, w, SessionCookie, sessionToken, time.Now().Add(SessionExpiry))
+	return sessionToken
 }
 
 // sendMessagePage renders a message page with a single message using the provided HTTP request and response writer.
 // It sets common template data, adds the specified message, and generates an HTML page using the "layout" and "message_page" templates.
 func sendMessagePage(r *http.Request, w http.ResponseWriter, msg string) {
-	templateData := set_common_template_data(TemplateData{}, r, w)
+	templateData := setCommonTemplateTata(TemplateData{}, r, w)
 	templateData.Messages = []string{msg}
 	generateHTML(w, templateData, "layout", "message_page")
 }
@@ -331,4 +328,34 @@ func sendMessagePage(r *http.Request, w http.ResponseWriter, msg string) {
 func getUrlVars(r *http.Request, variable string) string {
 	vars := mux.Vars(r)
 	return vars[variable]
+}
+
+// parseForm attempts to parse the HTTP request form data and handles any parsing errors
+// by logging the error and sending an HTTP 500 Internal Server Error response.
+func parseForm(r *http.Request, w http.ResponseWriter) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Printf("Error Parsing Form: %v", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// validLogin checks if a user's login credentials are valid by verifying:
+// 1. The user exists
+// 2. The user account is active
+// 3. The user status is approved
+// 4. The provided password matches the stored password hash
+// Returns true if all conditions are met, false otherwise.
+func validLogin(user db.User, password string) bool {
+	passwordCheckErr := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	return user.UserExist() && user.IsActive && user.UserStatusApproved() && passwordCheckErr == nil
+}
+
+func GetSessionData(r *http.Request) *db.Session {
+	sessionData, ok := r.Context().Value(server.SessionContext).(*db.Session)
+	if ok {
+		return sessionData
+	}
+	return &db.Session{}
 }
