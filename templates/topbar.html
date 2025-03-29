@@ -1,9 +1,11 @@
 {{if not .Session }}
 <div class="top-bar">
-  <div class="logo">BloTils</div>
   <div class="auth-links">
-    <a href="/login">Sign In</a>
-    <a href="/create_account">Create Account</a>
+    {{ if not .Data.indexPage}}
+    <a href="/"><b>Home </b></a> |
+    {{ end }}
+    <a href="/login"><b>Sign In</b></a> |
+    <a href="/create_account"><b>Create Account</b></a>
   </div>
 </div>
 {{ end }}

@@ -205,7 +205,7 @@ func setCookie(r *http.Request, w http.ResponseWriter, name string, value string
 // HTML templates.
 func addCommonFiles(files []string) []string {
 	const htmlLocation = "templates/%s.html"
-	commonFiles := []string{"favicon", "error_layout", "message_layout", "password", "sidebar", "footer", "topbar"}
+	commonFiles := []string{"favicon", "error_layout", "message_layout", "password", "sidebar", "footer", "topbar", "logo"}
 	for _, file := range commonFiles {
 		files = append(files, fmt.Sprintf(htmlLocation, file))
 	}

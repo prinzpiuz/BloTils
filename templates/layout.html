@@ -8,22 +8,30 @@
     <meta name="keywords" content="Blog, Go, Utils, Analytics, Web" />
     <meta name="author" content="prinzpiuz" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pacifico"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Yellowtail"
+      rel="stylesheet"
+    />
     {{ template "favicon.html" . }}
     <title>BloTils</title>
     <link rel="stylesheet" href="static/css/main.css" />
   </head>
-  <body class="{{ if .Data.indexPage }}body-without-sidebar{{ else }}body-with-sidebar{{ end }}">
-    {{ if .Data.indexPage}}
+  <body>
+    <div class="{{if .Session}}session-container{{else}}container{{end}}">
         {{ template "topbar.html" . }}
-        {{ template "content" . }}
-    {{else}}
         {{ template "sidebar.html" . }}
-        <div class="content">
-        {{ template "message_layout.html" . }}
-        {{ template "content" . }}
-        {{ template "error_layout.html" . }}
-        </div>
-    {{ end }}
+        <main class="content">
+            {{ template "message_layout.html" . }}
+            {{ template "content" . }}
+            {{ template "error_layout.html" . }}
+        </main>
+    </div>
     {{ template "footer.html" . }}
   </body>
 </html>

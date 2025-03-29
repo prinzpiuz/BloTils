@@ -1,18 +1,30 @@
 {{if .Session }}
-<div class="sidebar">
+<aside class="sidebar">
   <div class="user-info">
-    <p>{{.Session.User.Email }}</p>
-    <p><a href="/logout">Logout</a></p>
+    <p class="small-logo">BloTils</p>
+    <p>Hi, {{.Session.User.Email }}</p>
   </div>
-  <div class="sidebar-menu">
+  <div class="menu">
     <ul>
-      <li><a href="/admin">Users</a></li>
-      <li><a href="#">Sites</a></li>
-      <li><a href="#">Analytics</a></li>
+      <div class="menu-item">
+        <li><a href="/admin">Users</a></li>
+      </div>
+      <div class="menu-item">
+        <li><a href="#">Sites</a></li>
+      </div>
+      <div class="menu-item">
+        <li><a href="#">Analytics</a></li>
+      </div>
+      <div class="menu-item">
+        <li><a href="#">Settings</a></li>
+      </div>
+      <div class="menu-item">
+        <li><a href="/logout">Logout</a></li>
+      </div>
     </ul>
   </div>
   <div class="app-version">
     <p>Version: 1.0.0</p>
   </div>
-</div>
+</aside>
 {{ end }}
