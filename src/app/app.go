@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	fp "path/filepath"
 )
 
@@ -54,7 +53,7 @@ func LoadConfig(filepath string) Config {
 var ErrLoadingConfig = fmt.Errorf("error loading config from file")
 
 func loadConfigFromFile(fpath string) (Config, error) {
-	fp := filepath.Clean(fpath)
+	fp := fp.Clean(fpath)
 	jsonFile, err := os.Open(fp)
 	if err != nil {
 		return Config{}, fmt.Errorf("%w: %v", ErrLoadingConfig, err)

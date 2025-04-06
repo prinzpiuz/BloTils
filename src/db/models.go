@@ -8,9 +8,9 @@ import (
 // DomainSettings represents the settings for a domain, including whether likes and comments are enabled,
 // and the timestamp of the last update.
 type DomainSettings struct {
-	id        int
-	likes     bool
-	comments  bool
+	Id        int
+	likes     int
+	comments  int
 	timestamp time.Time
 }
 
@@ -20,9 +20,10 @@ type DomainSettings struct {
 // The domain field contains the domain name.
 // The timestamp field contains the timestamp for when the domain was created or updated.
 type Domain struct {
-	ID        int
-	settings  DomainSettings
-	domain    string
+	Id        int
+	User      User
+	Settings  DomainSettings
+	Domain    string
 	timestamp time.Time
 }
 
@@ -33,12 +34,25 @@ func (domain Domain) IsEmpty() bool {
 
 // LikesEnabled returns whether likes are enabled for the given Domain.
 func (domain Domain) LikesEnabled() bool {
-	return domain.settings.likes
+	return domain.Settings.likes == 1
 }
 
 // CommentsEnabled returns whether comments are enabled for the given Domain.
 func (domain Domain) CommentsEnabled() bool {
-	return domain.settings.comments
+	return domain.Settings.comments == 1
+}
+
+func DomainFactory(user User, domain string, likes int, comments int, id int) *Domain {
+	settings := DomainSettings{
+		likes:    likes,
+		comments: comments,
+	}
+	return &Domain{
+		Id:       id,
+		User:     user,
+		Settings: settings,
+		Domain:   domain,
+	}
 }
 
 // Like represents a like for a domain and URI.
@@ -60,7 +74,7 @@ func (likes Likes) IsEmpty() bool {
 }
 
 func (likes Likes) GetDomainID() int {
-	return likes.Domain.ID
+	return likes.Domain.Id
 }
 
 // LikedIPs represents a record of an IP address that has liked something, along with the count of likes and the timestamp of the last like.

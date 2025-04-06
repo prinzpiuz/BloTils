@@ -10,50 +10,112 @@ import (
 
 // GetDomain retrieves a Domain from the database by the given domain_name.
 // If the domain is not found, it returns an empty Domain.
-func GetDomain(db *sql.DB, domain_name string) Domain {
+func GetDomain(db *sql.DB, domainName string) Domain {
 	var domain Domain
-	err := db.QueryRow(getDomain, domain_name).Scan(
-		&domain.ID,
-		&domain.settings.id,
-		&domain.domain,
+	err := db.QueryRow(getDomain, domainName).Scan(
+		&domain.Id,
+		&domain.Settings.Id,
+		&domain.Domain,
 		&domain.timestamp,
-		&domain.settings.id,
-		&domain.settings.likes,
-		&domain.settings.comments,
-		&domain.settings.timestamp)
+		&domain.Settings.Id,
+		&domain.Settings.likes,
+		&domain.Settings.comments,
+		&domain.Settings.timestamp)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("DB: Domain %s, Not Found", domain_name)
+			log.Printf("DB: Domain %s, Not Found", domainName)
 			return Domain{}
 		}
-		log.Printf("Error Getting Domain %s: %v", domain_name, err)
+		log.Printf("Error Getting Domain %s: %v", domainName, err)
 		return Domain{}
 	}
 	return domain
 }
 
-func GetLikes(db *sql.DB, domain_name string, page string) Likes {
+// GetDomainById retrieves a Domain from the database by the given domain ID.
+// If the domain is not found, it returns an empty Domain.
+func GetDomainById(db *sql.DB, domainId int) Domain {
+	var domain Domain
+	err := db.QueryRow(getDomainById, domainId).Scan(
+		&domain.Id,
+		&domain.Settings.Id,
+		&domain.Domain,
+		&domain.timestamp,
+		&domain.Settings.Id,
+		&domain.Settings.likes,
+		&domain.Settings.comments,
+		&domain.Settings.timestamp)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("DB: Domain %d, Not Found", domainId)
+			return Domain{}
+		}
+		log.Printf("Error Getting Domain %d: %v", domainId, err)
+		return Domain{}
+	}
+	return domain
+}
+
+// GetAllUserDomains retrieves all domains associated with a specific user from the database.
+// It takes a database connection and a user ID as input, and returns a slice of Domain structs.
+// If no domains are found or an error occurs during the database query, it returns nil.
+func GetAllUserDomains(db *sql.DB, userID int) []Domain {
+	var domains []Domain
+
+	rows, err := db.Query(getAllUserDomains, userID)
+	if err == sql.ErrNoRows {
+		log.Print("No Domains Found")
+		return nil
+	} else if err != nil {
+		log.Printf("Error Querying Database: %v", err)
+		return nil
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var domain Domain
+		err := rows.Scan(&domain.Id, &domain.Settings.Id, &domain.Domain, &domain.timestamp)
+		if err != nil {
+			log.Printf("Scaning Rows Failed: %v", err)
+			return nil
+		}
+		domains = append(domains, domain)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Iteration Failed: %v", err)
+		return nil
+	}
+	return domains
+}
+
+// GetLikes retrieves the likes information for a specific page within a given domain from the database.
+// If no likes are found for the specified page and domain, it returns an empty Likes struct.
+// Returns a Likes struct containing details such as like count, URI, and domain information.
+func GetLikes(db *sql.DB, domainName string, page string) Likes {
 	var likes Likes
-	err := db.QueryRow(getLikes, domain_name, page).Scan(
+	err := db.QueryRow(getLikes, domainName, page).Scan(
 		&likes.id,
 		&likes.URI,
 		&likes.domain_id,
 		&likes.Count,
-		&likes.Domain.ID,
-		&likes.Domain.settings.id,
-		&likes.Domain.domain,
+		&likes.Domain.Id,
+		&likes.Domain.Settings.Id,
+		&likes.Domain.Domain,
 		&likes.Domain.timestamp)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("DB: Likes On %s, Not Found In %s", page, domain_name)
+			log.Printf("DB: Likes On %s, Not Found In %s", page, domainName)
 			return Likes{}
 		}
-		log.Printf("Error Getting Likes On %s For %s: %v", page, domain_name, err)
+		log.Printf("Error Getting Likes On %s For %s: %v", page, domainName, err)
 		return Likes{}
 	}
 	return likes
 }
 
+// GetLikedIP retrieves the liked IP information for a specific IP address within a given domain and page from the database.
+// If no liked IP is found for the specified IP, domain, and page, it returns an empty LikedIPs struct.
+// Returns a LikedIPs struct containing details such as IP, like count, domain, and path.
 func GetLikedIP(db *sql.DB, domain string, page string, ip string) LikedIPs {
 	var likedIP LikedIPs
 	err := db.QueryRow(getIPlikedOrNot, ip, domain, page).Scan(
@@ -74,6 +136,8 @@ func GetLikedIP(db *sql.DB, domain string, page string, ip string) LikedIPs {
 	return likedIP
 }
 
+// UpdateIPLikeCount updates or inserts the like count for a specific IP address within a given domain and page.
+// It executes a database query to record the IP's interaction and logs any errors encountered during the process.
 func UpdateIPLikeCount(db *sql.DB, domain string, path string, ip string) {
 	_, err := db.Exec(updateOrInsertLikedIP, domain, path, ip)
 	if err != nil {
@@ -82,18 +146,32 @@ func UpdateIPLikeCount(db *sql.DB, domain string, path string, ip string) {
 
 }
 
+// UpdateLikeCount updates the like count for a specific page within a given domain.
+// It executes a database query to increment or update the like count and returns any error encountered during the process.
+// The function takes a database connection, page identifier, and domain ID as parameters.
 func UpdateLikeCount(db *sql.DB, page string, doamin_id int) error {
 	_, err := db.Exec(updateLike, page, doamin_id)
 	return err
 }
 
-func AddDomainAndSettings(db *sql.DB, domain string, likes int, comments int) {
-	_, err := db.Exec(addDomainAndSettings, likes, comments, domain)
+// AddDomainAndSettings adds a new domain to the database with specified likes and comments settings.
+// It executes a database query to insert the domain and its configuration, logging any errors encountered during the process.
+func AddDomainAndSettings(db *sql.DB, domain *Domain) {
+	_, err := db.Exec(addDomainAndSettings, domain.Settings.likes, domain.Settings.comments, domain.User.Id, domain.Domain)
 	if err != nil {
-		log.Printf("Error Adding Domain %s: %v", domain, err)
+		log.Printf("Error Adding Domain %s: %v", domain.Domain, err)
 	}
 }
 
+func UpdateDomainDetails(db *sql.DB, domain *Domain) {
+	_, err := db.Exec(updateDomainDetails, domain.Domain, domain.Id, domain.User.Id, domain.Settings.likes, domain.Settings.comments, domain.Id, domain.User.Id)
+	if err != nil {
+		log.Printf("Error Updating Domain %s: %v", domain.Domain, err)
+	}
+}
+
+// CreatSuperUser adds a new admin user to the database with the provided email and password hash.
+// It executes a database query to insert the admin user and returns any error encountered during the process.
 func CreatSuperUser(db *sql.DB, email string, passwordHash string) error {
 	_, err := db.Exec(addAdminUser, email, passwordHash)
 	if err != nil {
@@ -103,6 +181,8 @@ func CreatSuperUser(db *sql.DB, email string, passwordHash string) error {
 	return nil
 }
 
+// AddUserRequest adds a new user account creation request to the database with the provided email and password hash.
+// It executes a database query to insert the user request and returns any error encountered during the process.
 func AddUserRequest(db *sql.DB, email string, passwordHash string) error {
 	_, err := db.Exec(accountCreationRequest, email, passwordHash)
 	if err != nil {
@@ -112,6 +192,9 @@ func AddUserRequest(db *sql.DB, email string, passwordHash string) error {
 	return nil
 }
 
+// GetUser retrieves a user from the database by their email address.
+// It queries the database for a user with the given email and returns the user's details.
+// If no user is found or an error occurs, it returns an empty User struct and logs the error.
 func GetUser(db *sql.DB, email string) User {
 	var user User
 	err := db.QueryRow(getUser, email).Scan(
@@ -228,7 +311,6 @@ func DeleteSessionWithSessionId(db *sql.DB, sessionId string) error {
 func GetAllUsers(db *sql.DB) []User {
 	var users []User
 	rows, err := db.Query(getAllusers)
-	defer rows.Close()
 	if err == sql.ErrNoRows {
 		log.Print("No Users Found")
 		return nil
@@ -236,6 +318,7 @@ func GetAllUsers(db *sql.DB) []User {
 		log.Printf("Error Querying Database: %v", err)
 		return nil
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var user User
 		err := rows.Scan(&user.Id, &user.Email, &user.userRole, &user.IsActive, &user.userStatus, &user.timestamp)

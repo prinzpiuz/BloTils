@@ -50,6 +50,7 @@ func RegisterRoutes(s *server.Server) {
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: false,
+		DynamicRoute:  true,
 	})
 	s.SetRoute(server.RouteDetails{
 		Path:          "/login",
@@ -71,6 +72,28 @@ func RegisterRoutes(s *server.Server) {
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: true,
 		LoginRequired: true,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/domains",
+		Handler:       localHandlers.GetUserDomains,
+		Methods:       []string{http.MethodGet},
+		AdminRequired: false,
+		LoginRequired: true,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/add_domain",
+		Handler:       localHandlers.AddDomain,
+		Methods:       []string{http.MethodGet, http.MethodPost},
+		AdminRequired: false,
+		LoginRequired: true,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/domain/{domain_id}",
+		Handler:       localHandlers.EditDomainSettings,
+		Methods:       []string{http.MethodGet, http.MethodPost},
+		AdminRequired: false,
+		LoginRequired: true,
+		DynamicRoute:  true,
 	})
 	// API routes
 	s.SetRoute(server.RouteDetails{

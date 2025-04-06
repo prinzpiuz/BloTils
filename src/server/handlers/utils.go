@@ -17,6 +17,8 @@ import (
 	"net/http"
 	"net/mail"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -200,14 +202,24 @@ func setCookie(r *http.Request, w http.ResponseWriter, name string, value string
 
 }
 
-// add_common_files appends the "favicon" template file to the given list of HTML template files.
-// This function is used to ensure that the "favicon" template is always included when rendering
-// HTML templates.
+// addCommonFiles walks through the partials templates directory and appends all template files
+// to the provided slice of files. It is used to dynamically include common template files
+// during HTML template rendering.
 func addCommonFiles(files []string) []string {
-	const htmlLocation = "templates/%s.html"
-	commonFiles := []string{"favicon", "error_layout", "message_layout", "password", "sidebar", "footer", "topbar", "logo"}
-	for _, file := range commonFiles {
-		files = append(files, fmt.Sprintf(htmlLocation, file))
+	commonTemplates := "templates/partials"
+	err := filepath.Walk(commonTemplates, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("prevent panic by handling failure accessing a path %q: %v\n", path, err)
+			return err
+		}
+		if !info.IsDir() {
+			fileName := fmt.Sprintf("%s/%s", commonTemplates, info.Name())
+			files = append(files, fileName)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("error walking the path %q: %v\n", commonTemplates, err)
 	}
 	return files
 }
@@ -238,6 +250,7 @@ func setCommonTemplateTata(data TemplateData, r *http.Request, w http.ResponseWr
 		data.Static = serverConfig.StaticFiles
 	}
 	data.CSRFToken = generateCSRFToken(r, w)
+	data.Session = GetSessionData(r)
 	return data
 }
 
@@ -352,10 +365,23 @@ func validLogin(user db.User, password string) bool {
 	return user.UserExist() && user.IsActive && user.UserStatusApproved() && passwordCheckErr == nil
 }
 
+// GetSessionData retrieves the session data from the HTTP request context.
+// If session data is found, it returns the session; otherwise, it returns an empty session.
 func GetSessionData(r *http.Request) *db.Session {
 	sessionData, ok := r.Context().Value(server.SessionContext).(*db.Session)
 	if ok {
 		return sessionData
 	}
 	return &db.Session{}
+}
+
+// getToggleValues retrieves the value of a form checkbox field and converts it to an integer.
+// It returns 1 if the field value is "on", otherwise returns 0.
+func getToggleValues(r *http.Request, fieldName string) int {
+	toggleValue := r.FormValue(fieldName)
+	if toggleValue == "on" {
+		return 1
+	}
+	return 0
+
 }

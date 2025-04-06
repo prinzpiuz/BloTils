@@ -21,6 +21,7 @@ type ContextKey string
 
 var ProtectedRoutes = []string{}
 var AdminOnly = []string{}
+var DynamicRoutes = []string{}
 
 const (
 	ServerConfigContext ContextKey = "serverconfiguration"
@@ -81,19 +82,26 @@ type RouteDetails struct {
 	Handler       http.HandlerFunc
 	LoginRequired bool
 	AdminRequired bool
+	DynamicRoute  bool `default:"false"`
 	Methods       []string
 }
 
-// setRoutes registers the given handler function for the specified path and HTTP
-// methods on the provided server. It uses gorilla/mux for routing and
-// gorilla/handlers for logging.
+// SetRoute configures and registers a route with the server's router, handling route protection and logging.
+// It supports setting routes as login-required (with dynamic or static paths), admin-only routes,
+// and applies combined logging to the route handler. The route is registered with specified HTTP methods.
 func (server *Server) SetRoute(routeDetails RouteDetails) {
 	if routeDetails.LoginRequired {
-		ProtectedRoutes = append(ProtectedRoutes, routeDetails.Path)
+		if routeDetails.DynamicRoute {
+			firstPart := strings.Split(routeDetails.Path, "/")[1]
+			DynamicRoutes = append(DynamicRoutes, firstPart)
+		} else {
+			ProtectedRoutes = append(ProtectedRoutes, routeDetails.Path)
+		}
 	}
 	if routeDetails.AdminRequired {
 		AdminOnly = append(AdminOnly, routeDetails.Path)
 	}
+
 	server.Router.Handle(routeDetails.Path, handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(routeDetails.Handler))).Methods(routeDetails.Methods...)
 }
 
@@ -178,7 +186,8 @@ func csrfMiddleware(next http.Handler) http.Handler {
 func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		nextpage := fmt.Sprintf("/login?next=%s", r.URL.Path)
-		if !slices.Contains(ProtectedRoutes, r.URL.Path) {
+		firstPart := strings.Split(r.URL.Path, "/")[1]
+		if !slices.Contains(ProtectedRoutes, r.URL.Path) && !slices.Contains(DynamicRoutes, firstPart) {
 			next.ServeHTTP(w, r)
 			return
 		}

@@ -1,0 +1,38 @@
+{{ define "content" }}
+{{ template "add_site_modal.html" . }}
+<div class="user-list-container">
+  <h2>User Configured Domains</h2>
+  {{ if .Data.domains}}
+  <div class="cta-buttons">
+    <button id="openModalBtn">Add Domain</button>
+  </div>
+  <table class="user-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Domain</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Data.domains }}
+      <tr>
+        <td>{{ .Id }}</td>
+        <td><a href="domain/{{.Id}}">{{ .Domain }}</a></td>
+        <td><a href="#">Edit</a> | <a href="#">Delete</a></td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ else }}
+  <div class="no-data-container">
+    <p class="no-data">No sites found.</p>
+    <div class="cta-buttons">
+      <button id="openModalBtn">Add Site</button>
+    </div>
+  </div>
+
+  {{ end }}
+</div>
+<script src="{{.Static}}/js/add_site.js"></script>
+{{ end }}

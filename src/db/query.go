@@ -4,10 +4,55 @@ package db
 // getDomain is a SQL query that selects all rows from the Domain and DomainSettings tables
 // where the domain column in the Domain table matches the provided parameter.
 // The query joins the two tables on the id column.
-const getDomain = `SELECT * FROM Domain
-				   JOIN DomainSettings
-				   ON Domain.id = DomainSettings.id
-				   WHERE domain = ?`
+const getDomain = `SELECT
+					 d.id,
+					 d.settings_id,
+					 d.domain,
+					 d.created_time,
+					 ds.id,
+					 ds.likes,
+					 ds.comments,
+					 ds.created_time
+				   FROM
+					 Domain d
+				   JOIN DomainSettings ds ON d.id = ds.id
+				   WHERE
+					 d.domain = ?`
+
+// getDomainById is a SQL query that selects all rows from the Domain and DomainSettings tables
+// where the id column in the Domain table matches the provided parameter.
+// The query joins the two tables on the id column, retrieving domain details and settings.
+const getDomainById = `SELECT
+					 d.id,
+					 d.settings_id,
+					 d.domain,
+					 d.created_time,
+					 ds.id,
+					 ds.likes,
+					 ds.comments,
+					 ds.created_time
+				   FROM
+					 Domain d
+				   JOIN DomainSettings ds ON d.id = ds.id
+				   WHERE
+					 d.id = ?`
+
+// getAllUserDomains is a SQL query that selects all domains for a specific user,
+// retrieving the domain's ID, settings ID, domain name, and creation time.
+// The results are ordered by creation time in descending order, showing the most
+// recently created domains first.
+const getAllUserDomains = `SELECT
+						 d.id,
+						 d.settings_id,
+						 d.domain,
+						 d.created_time
+					   FROM
+					     Domain d
+					   WHERE
+					     d.user_id = ?
+					   ORDER BY
+					   	 d.created_time
+					   DESC`
 
 // getLikes is a SQL query that selects all rows from the Likes table
 // where the uri matches the provided value, and the domain matches the
@@ -64,9 +109,18 @@ const updateLike = `INSERT INTO Likes(uri, count, domain_id)
 const addDomainAndSettings = `BEGIN TRANSACTION;
 							  INSERT INTO DomainSettings (likes, comments, created_time)
 							  VALUES (?, ?, datetime());
-							  INSERT INTO Domain (settings_id, domain, created_time)
-							  VALUES (last_insert_rowid(), ?, datetime());
+							  INSERT INTO Domain (settings_id, user_id, domain, created_time)
+							  VALUES (last_insert_rowid(), ?, ?, datetime());
 							  COMMIT TRANSACTION;`
+
+const updateDomainDetails = `BEGIN TRANSACTION;
+							 UPDATE Domain
+							 SET domain = ?
+							 WHERE id = ? AND user_id = ?;
+							 UPDATE DomainSettings
+							 SET likes =?, comments =?
+                             WHERE id = (SELECT settings_id FROM Domain WHERE Domain.id =? AND Domain.user_id =?);
+							 COMMIT TRANSACTION;`
 
 // addAdminUser is a SQL query that inserts a new admin user into the User table
 // with predefined active status and admin role. The query uses placeholders for

@@ -1,4 +1,4 @@
-{{if not .Session }}
+{{if .Session.IsEmpty }}
 <div class="top-bar">
   <div class="auth-links">
     {{ if not .Data.indexPage}}

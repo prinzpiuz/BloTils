@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS PasswordResetToken (
         or used = 1
     ),
     created_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES User(id)
+    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
 );

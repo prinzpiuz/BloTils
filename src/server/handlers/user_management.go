@@ -39,7 +39,7 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 		err := db.AddUserRequest(db_connection, email, passwordHash)
 		if err != nil {
 			msg := fmt.Sprintf("Error: Adding user request %s to DB failed", email)
-			log.Printf(msg)
+			log.Print(msg)
 			http.Error(w, msg, http.StatusInternalServerError)
 		}
 		log.Printf("Succesfully Added user request %s", email)

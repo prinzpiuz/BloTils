@@ -1,4 +1,4 @@
-{{if .Session }}
+{{if not .Session.IsEmpty}}
 <aside class="sidebar">
   <div class="user-info">
     <p class="small-logo">BloTils</p>
@@ -10,7 +10,7 @@
         <li><a href="/admin">Users</a></li>
       </div>
       <div class="menu-item">
-        <li><a href="#">Sites</a></li>
+        <li><a href="/domains">Sites</a></li>
       </div>
       <div class="menu-item">
         <li><a href="#">Analytics</a></li>

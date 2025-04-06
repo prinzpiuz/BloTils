@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS Sessions (
     user_id INTEGER NOT NULL,
     expiry_time DATETIME NOT NULL,
     created_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES User(id)
+    FOREIGN KEY (user_id) REFERENCES User(id) ON DELETE CASCADE
 );

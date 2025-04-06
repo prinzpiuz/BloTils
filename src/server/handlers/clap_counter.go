@@ -131,7 +131,7 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 			if already_liked_IP(r, clapCounter) {
 				clapCounter.SetClapCounter(clapCounter.URL, ClapAlreadyCounted, likes.Count, false)
 			} else {
-				err := add_like_to_page(r, clapCounter, domain.ID)
+				err := add_like_to_page(r, clapCounter, domain.Id)
 				if err != nil {
 					log.Printf("Error Updating Like Count: %v", err)
 					clapCounter.SetClapCounter(clapCounter.URL, ClapCountedFailed, likes.Count, false)
