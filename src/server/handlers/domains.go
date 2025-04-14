@@ -40,19 +40,12 @@ func AddDomain(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func _domainIdParsingError(w http.ResponseWriter, r *http.Request, err error) {
-	if err != nil {
-		log.Printf("Error parsing domain_id: %v", err)
-		http.Redirect(w, r, "/domains", http.StatusSeeOther)
-	}
-}
-
 func EditDomainSettings(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		db_connection := GetDbConnection(r)
 		domainId, err := strconv.Atoi(getUrlVars(r, "domain_id"))
-		_domainIdParsingError(w, r, err)
+		commonIntParsingError(w, r, err)
 		domain := db.GetDomainById(db_connection, domainId)
 		templateData := setCommonTemplateTata(TemplateData{}, r, w)
 		templateData.Data = map[string]any{"domain": domain, "edit_page": true}
@@ -60,11 +53,11 @@ func EditDomainSettings(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		db_connection := GetDbConnection(r)
 		domainId, err := strconv.Atoi(getUrlVars(r, "domain_id"))
-		_domainIdParsingError(w, r, err)
+		commonIntParsingError(w, r, err)
 		sessionData := GetSessionData(r)
 		parseForm(r, w)
 		domainIdFromForm, err := strconv.Atoi(r.FormValue("domainId"))
-		_domainIdParsingError(w, r, err)
+		commonIntParsingError(w, r, err)
 		if domainId != domainIdFromForm {
 			log.Printf("Domain ID mismatch: %v != %v", domainId, domainIdFromForm)
 		} else {
@@ -76,5 +69,16 @@ func EditDomainSettings(w http.ResponseWriter, r *http.Request) {
 		}
 		redirectUrl := fmt.Sprintf("/domain/%v", domainId)
 		http.Redirect(w, r, redirectUrl, http.StatusSeeOther)
+	}
+}
+
+
+func DeleteDomain(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		db_connection := GetDbConnection(r)
+		domainId, err := strconv.Atoi(getUrlVars(r, "domain_id"))
+		commonIntParsingError(w, r, err)
+		db.DeleteDomain(db_connection, domainId)
+		http.Redirect(w, r, "/domains", http.StatusSeeOther)
 	}
 }

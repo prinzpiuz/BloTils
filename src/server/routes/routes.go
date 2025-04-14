@@ -74,6 +74,22 @@ func RegisterRoutes(s *server.Server) {
 		LoginRequired: true,
 	})
 	s.SetRoute(server.RouteDetails{
+		Path:          "/approve_account/{user_id}",
+		Handler:       localHandlers.ApproveUserRequest,
+		Methods:       []string{http.MethodGet},
+		AdminRequired: true,
+		LoginRequired: true,
+		DynamicRoute:  true,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/delete_user/{user_id}",
+		Handler:       localHandlers.DeleteUser,
+		Methods:       []string{http.MethodGet},
+		AdminRequired: true,
+		LoginRequired: true,
+		DynamicRoute:  true,
+	})
+	s.SetRoute(server.RouteDetails{
 		Path:          "/domains",
 		Handler:       localHandlers.GetUserDomains,
 		Methods:       []string{http.MethodGet},
@@ -91,6 +107,14 @@ func RegisterRoutes(s *server.Server) {
 		Path:          "/domain/{domain_id}",
 		Handler:       localHandlers.EditDomainSettings,
 		Methods:       []string{http.MethodGet, http.MethodPost},
+		AdminRequired: false,
+		LoginRequired: true,
+		DynamicRoute:  true,
+	})
+	s.SetRoute(server.RouteDetails{
+		Path:          "/delete_domain/{domain_id}",
+		Handler:       localHandlers.DeleteDomain,
+		Methods:       []string{http.MethodGet},
 		AdminRequired: false,
 		LoginRequired: true,
 		DynamicRoute:  true,

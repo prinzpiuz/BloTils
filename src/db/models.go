@@ -144,6 +144,18 @@ func (user User) UserRole() string {
 	return "Unknown"
 }
 
+func (user User) UserStatus() string {
+	switch user.userStatus {
+	case 1:
+		return "Approved"
+	case 2:
+		return "Requested"
+	case 3:
+		return "Denied"
+	}
+	return "Unknown"
+}
+
 type PasswordResetToken struct {
 	Token      string
 	User       User

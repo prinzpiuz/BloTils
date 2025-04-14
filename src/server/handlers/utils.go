@@ -270,7 +270,11 @@ func generateHTML(w http.ResponseWriter, data TemplateData, filenames ...string)
 		files = append(files, fmt.Sprintf("templates/%s.html", file))
 	}
 	files = addCommonFiles(files)
-	templates := template.Must(template.ParseFiles(files...))
+	funcs := template.FuncMap{
+		"notCurrentAdmin": notCurrentAdmin,
+	}
+	tmpl := template.New("").Funcs(funcs)
+	templates := template.Must(tmpl.ParseFiles(files...))
 	err := templates.ExecuteTemplate(w, "layout", data)
 	if err != nil {
 		log.Printf("Error Generating HTML: %v", err.Error())
@@ -384,4 +388,11 @@ func getToggleValues(r *http.Request, fieldName string) int {
 	}
 	return 0
 
+}
+
+func commonIntParsingError(w http.ResponseWriter, r *http.Request, err error) {
+	if err != nil {
+		log.Printf("Error parsing domain_id: %v", err)
+		http.Redirect(w, r, "/domains", http.StatusSeeOther)
+	}
 }

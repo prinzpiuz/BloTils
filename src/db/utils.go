@@ -88,6 +88,15 @@ func GetAllUserDomains(db *sql.DB, userID int) []Domain {
 	return domains
 }
 
+func DeleteDomain(db *sql.DB, domainId int) error {
+	_, err := db.Exec(deleteDomain, domainId)
+	if err != nil {
+		log.Printf("Error Deleting Domain %d: %v", domainId, err)
+		return err
+	}
+	return nil
+}
+
 // GetLikes retrieves the likes information for a specific page within a given domain from the database.
 // If no likes are found for the specified page and domain, it returns an empty Likes struct.
 // Returns a Likes struct containing details such as like count, URI, and domain information.
@@ -216,6 +225,32 @@ func GetUser(db *sql.DB, email string) User {
 	return user
 }
 
+// GetUserWithId retrieves a user from the database by their user ID.
+// It queries the database for a user with the given ID and returns the user's details.
+// If no user is found or an error occurs, it returns an empty User struct and logs the error.
+func GetUserWithId(db *sql.DB, id int) User {
+	var user User
+	err := db.QueryRow(getUserWithId, id).Scan(
+		&user.Id,
+		&user.Email,
+		&user.PasswordHash,
+		&user.userRole,
+		&user.IsActive,
+		&user.userStatus,
+		&user.timestamp)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("DB: User With Id %d, Not Found", id)
+			return User{}
+		}
+		log.Printf("Error Getting User  With Id %d: %v", id, err)
+		return User{}
+	}
+	return user
+}
+
+// SetRestToken saves a password reset token for a specific user with a 10-minute expiration time.
+// It inserts the token into the database and returns any error encountered during the process.
 func SetRestToken(db *sql.DB, token string, userId int) error {
 	expiryTime := time.Now().Add(10 * time.Minute)
 	_, err := db.Exec(addResetToken, token, userId, expiryTime)
@@ -226,6 +261,9 @@ func SetRestToken(db *sql.DB, token string, userId int) error {
 	return nil
 }
 
+// GetTokenUser retrieves a password reset token from the database by its token string.
+// It queries the database for a token with the given token and returns the associated PasswordResetToken.
+// If no token is found or an error occurs, it returns an empty PasswordResetToken struct and logs the error.
 func GetTokenUser(db *sql.DB, token string) PasswordResetToken {
 	var tokenObj PasswordResetToken
 	err := db.QueryRow(getTokenUser, token).Scan(&tokenObj.Token,
@@ -246,6 +284,9 @@ func GetTokenUser(db *sql.DB, token string) PasswordResetToken {
 	return tokenObj
 }
 
+// DeleteTokenAndSetPassword invalidates a password reset token and updates the user's password in a single database transaction.
+// It takes the reset token, new password hash, and user ID as parameters and executes a database query to complete the password reset process.
+// Returns an error if the database operation fails, otherwise returns nil.
 func DeleteTokenAndSetPassword(db *sql.DB, token string, passwordHash string, userId int) error {
 	_, err := db.Exec(resetTokenAndUpdatePassword, token, passwordHash, userId)
 	if err != nil {
@@ -299,6 +340,9 @@ func DeleteSession(db *sql.DB, userId int) error {
 	return nil
 }
 
+// DeleteSessionWithSessionId removes a specific session from the database using its session ID
+// It takes a database connection and a session ID as parameters
+// Returns an error if the database operation fails
 func DeleteSessionWithSessionId(db *sql.DB, sessionId string) error {
 	_, err := db.Exec(deleteSession, sessionId)
 	if err != nil {
@@ -308,6 +352,9 @@ func DeleteSessionWithSessionId(db *sql.DB, sessionId string) error {
 	return nil
 }
 
+// GetAllUsers retrieves all users from the database
+// Returns a slice of User structs containing user information
+// Returns nil if no users are found or if a database error occurs
 func GetAllUsers(db *sql.DB) []User {
 	var users []User
 	rows, err := db.Query(getAllusers)
@@ -335,4 +382,28 @@ func GetAllUsers(db *sql.DB) []User {
 	}
 	return users
 
+}
+
+// ApproveUser updates the status of a user to approved in the database
+// It takes a database connection and a user ID as parameters
+// Returns an error if the database operation fails
+func ApproveUser(db *sql.DB, userId int) error {
+	_, err := db.Exec(approveUser, userId)
+	if err != nil {
+		log.Printf("Error Approving User %d: %v", userId, err)
+		return err
+	}
+	return nil
+}
+
+// DeleteUser removes a user from the database by their user ID
+// It takes a database connection and a user ID as parameters
+// Returns an error if the database operation fails
+func DeleteUser(db *sql.DB, userId int) error {
+	_, err := db.Exec(deleteUser, userId)
+	if err != nil {
+		log.Printf("Error Deleting User %d: %v", userId, err)
+		return err
+	}
+	return nil
 }

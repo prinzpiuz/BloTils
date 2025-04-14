@@ -54,6 +54,12 @@ const getAllUserDomains = `SELECT
 					   	 d.created_time
 					   DESC`
 
+
+// deleteDomain is a SQL query that deletes a specific domain from the Domain table
+// based on the provided domain ID. It removes the entire domain record matching
+// the given identifier.
+const deleteDomain = `DELETE FROM Domain WHERE id = ?`
+
 // getLikes is a SQL query that selects all rows from the Likes table
 // where the uri matches the provided value, and the domain matches the
 // provided domain. It joins the Likes table with the Domain table to
@@ -139,6 +145,8 @@ const accountCreationRequest = `INSERT INTO User(email, password_hash, user_role
 // The query uses a parameterized input to safely select a user by their unique email identifier.
 const getUser = `SELECT * FROM User WHERE email = ?`
 
+const getUserWithId = `SELECT * FROM User WHERE id = ?`
+
 // addResetToken is a SQL query that inserts a new password reset token into the PasswordResetToken table
 // with the provided token, user ID, and expiration time. The query uses placeholders to allow
 // dynamic token creation for password reset functionality.
@@ -212,6 +220,10 @@ const deleteUserSessions = `DELETE FROM Sessions
 const deleteSession = `DELETE FROM Sessions
 					   WHERE session_id = ?`
 
+// getAllusers is a SQL query that retrieves a comprehensive list of all users
+// from the User table, sorted by their creation time in descending order.
+// The query returns user details including ID, email, role, active status,
+// user status, and creation timestamp, providing a full overview of users.
 const getAllusers = `SELECT
 					  u.id,
 					  u.email,
@@ -223,3 +235,19 @@ const getAllusers = `SELECT
 					  User u
 					ORDER BY
 					  created_time DESC`
+
+// approveUser is a SQL query that updates a user's status to approved by setting their user role,
+// active status, and user status to 1 (typically indicating an active and approved account state)
+// for a specific user identified by their unique ID. This query is used in user management processes
+// to grant full access and confirm a user's account.
+const approveUser = `UPDATE USER
+					 SET user_role = 1,
+						 is_active = 1,
+						 user_status = 1
+					WHERE  USER.id = ? 
+					AND USER.user_status = 2`
+
+// deleteUser is a SQL query that removes a specific user record from the USER table
+// by matching the provided user ID. This query is used to permanently delete
+// a user from the system, typically during user management or account removal processes.
+const deleteUser = `DELETE FROM USER WHERE id = ?;`
