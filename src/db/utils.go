@@ -70,7 +70,15 @@ func GetAllUserDomains(db *sql.DB, userID int) []Domain {
 		log.Printf("Error Querying Database: %v", err)
 		return nil
 	}
-	defer rows.Close()
+	defer func() {
+		if err = rows.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+	if err != nil {
+		log.Printf("Error Closing Rows: %v", err)
+		return nil
+	}
 	for rows.Next() {
 		var domain Domain
 		err := rows.Scan(&domain.Id, &domain.Settings.Id, &domain.Domain, &domain.timestamp)
@@ -91,7 +99,6 @@ func GetAllUserDomains(db *sql.DB, userID int) []Domain {
 func DeleteDomain(db *sql.DB, domainId int) error {
 	_, err := db.Exec(deleteDomain, domainId)
 	if err != nil {
-		log.Printf("Error Deleting Domain %d: %v", domainId, err)
 		return err
 	}
 	return nil
@@ -365,7 +372,11 @@ func GetAllUsers(db *sql.DB) []User {
 		log.Printf("Error Querying Database: %v", err)
 		return nil
 	}
-	defer rows.Close()
+	defer func() {
+		if err = rows.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
 	for rows.Next() {
 		var user User
 		err := rows.Scan(&user.Id, &user.Email, &user.userRole, &user.IsActive, &user.userStatus, &user.timestamp)
@@ -390,7 +401,6 @@ func GetAllUsers(db *sql.DB) []User {
 func ApproveUser(db *sql.DB, userId int) error {
 	_, err := db.Exec(approveUser, userId)
 	if err != nil {
-		log.Printf("Error Approving User %d: %v", userId, err)
 		return err
 	}
 	return nil
@@ -402,7 +412,6 @@ func ApproveUser(db *sql.DB, userId int) error {
 func DeleteUser(db *sql.DB, userId int) error {
 	_, err := db.Exec(deleteUser, userId)
 	if err != nil {
-		log.Printf("Error Deleting User %d: %v", userId, err)
 		return err
 	}
 	return nil

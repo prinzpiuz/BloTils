@@ -19,7 +19,7 @@
         <td>{{ .Email }}</td>
         <td>{{ .UserRole }}</td>
         <td>{{ .UserStatus }}</td>
-        <td>{{ if .UserStatusRequested }}<a href="/approve_account/{{.Id}}">Approve</a> |{{ end }} 
+        <td>{{ if .UserStatusRequested }}<a href="/approve_account/{{.Id}}">Approve</a> |{{ end }}
             {{ if notCurrentAdmin .Id $.Session.User.Id }}<a href="/delete_user/{{ .Id }}">Delete</a>{{ end }}</td>
       </tr>
       {{ end }}

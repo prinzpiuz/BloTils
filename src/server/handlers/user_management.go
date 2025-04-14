@@ -19,7 +19,7 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		templateData := setCommonTemplateTata(TemplateData{}, r, w)
+		templateData := setCommonTemplateData(r, w)
 		generateHTML(w, templateData, "layout", "create_account")
 	case http.MethodPost:
 		parseForm(r, w)
@@ -30,7 +30,7 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 		isEmailValidated, msg1 := userEmailValidated(db_connection, email)
 		isValidPassword, msg2 := checkeckPassword(password, confirmPassword)
 		if !isEmailValidated || !isValidPassword {
-			templateData := setCommonTemplateTata(TemplateData{}, r, w)
+			templateData := setCommonTemplateData(r, w)
 			templateData.Errors = []string{msg1, msg2}
 			generateHTML(w, templateData, "layout", "create_account")
 			return
@@ -42,8 +42,8 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 			log.Print(msg)
 			http.Error(w, msg, http.StatusInternalServerError)
 		}
-		log.Printf("Succesfully Added user request %s", email)
-		msg := `Account Creation Request Processed Succesfully <br>
+		log.Printf("Successfully Added user request %s", email)
+		msg := `Account Creation Request Processed Successfully <br>
 								Wait for approval from admin`
 		sendMessagePage(r, w, msg)
 	}
@@ -80,7 +80,10 @@ func CreateAdmin(db_connection *sql.DB) {
 		password string
 	)
 	fmt.Print("Email: ")
-	fmt.Scanln(&email)
+	_, err := fmt.Scanln(&email)
+	if err != nil {
+		log.Fatal(err)
+	}
 	isEmailValidated, msg := userEmailValidated(db_connection, email)
 	if isEmailValidated {
 		fmt.Println("Note: Create A Strong Password")
@@ -102,7 +105,7 @@ func CreateAdmin(db_connection *sql.DB) {
 		if err != nil {
 			fmt.Printf("Error: Adding admin user %s to DB failed", email)
 		}
-		fmt.Printf("Succesfully Created Admin User %s", email)
+		fmt.Printf("Successfully Created Admin User %s", email)
 	} else {
 		fmt.Printf("Email Validations Failed\n,Error: %s", msg)
 	}
@@ -112,7 +115,7 @@ func CreateAdmin(db_connection *sql.DB) {
 func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		templateData := setCommonTemplateTata(TemplateData{}, r, w)
+		templateData := setCommonTemplateData(r, w)
 		generateHTML(w, templateData, "layout", "forgot_password")
 	case http.MethodPost:
 		parseForm(r, w)
@@ -139,7 +142,7 @@ func validateToken(w http.ResponseWriter, r *http.Request, token string) db.Pass
 	db_connection := GetDbConnection(r)
 	tokenObj := db.GetTokenUser(db_connection, token)
 	if !tokenObj.IsValid() {
-		setHTTPError(w, InvalidToken, UserHandler, http.StatusUnauthorized)
+		setHTTPError(w, ErrInvalidToken, UserHandler, http.StatusUnauthorized)
 		return db.PasswordResetToken{}
 	}
 	return tokenObj
@@ -153,7 +156,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 		if tokenObj.IsEmpty() {
 			return
 		}
-		templateData := setCommonTemplateTata(TemplateData{}, r, w)
+		templateData := setCommonTemplateData(r, w)
 		templateData.Data = map[string]interface{}{"tokenObj": tokenObj}
 		generateHTML(w, templateData, "layout", "reset_password")
 	case http.MethodPost:
@@ -167,7 +170,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 		confirmPassword := r.FormValue("confirmPassword")
 		isValidPassword, msg := checkeckPassword(password, confirmPassword)
 		if !isValidPassword {
-			templateData := setCommonTemplateTata(TemplateData{}, r, w)
+			templateData := setCommonTemplateData(r, w)
 			templateData.Errors = []string{msg}
 			templateData.Data = map[string]interface{}{"tokenObj": tokenObj}
 			generateHTML(w, templateData, "layout", "reset_password")
@@ -182,7 +185,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		sendMessagePage(r, w, "Password Reset Successfull")
+		sendMessagePage(r, w, "Password Reset Successful")
 		log.Printf("Password Reset Successfully for user %s", tokenObj.User.Email)
 	}
 }
@@ -190,7 +193,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 func Login(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		templateData := setCommonTemplateTata(TemplateData{}, r, w)
+		templateData := setCommonTemplateData(r, w)
 		generateHTML(w, templateData, "layout", "login")
 	case http.MethodPost:
 		parseForm(r, w)
@@ -214,7 +217,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Print("Error: Invalid Login")
-		templateData := setCommonTemplateTata(TemplateData{}, r, w)
+		templateData := setCommonTemplateData(r, w)
 		msg := "Invalid Email or Password"
 		templateData.Errors = []string{msg}
 		generateHTML(w, templateData, "layout", "login")

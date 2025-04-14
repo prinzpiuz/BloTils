@@ -13,7 +13,7 @@ func GetUserDomains(w http.ResponseWriter, r *http.Request) {
 		db_connection := GetDbConnection(r)
 		sessionData := GetSessionData(r)
 		domains := db.GetAllUserDomains(db_connection, sessionData.User.Id)
-		templateData := setCommonTemplateTata(TemplateData{}, r, w)
+		templateData := setCommonTemplateData(r, w)
 		templateData.Data = map[string]any{"domains": domains}
 		generateHTML(w, templateData, "layout", "domains")
 	} else {
@@ -47,7 +47,7 @@ func EditDomainSettings(w http.ResponseWriter, r *http.Request) {
 		domainId, err := strconv.Atoi(getUrlVars(r, "domain_id"))
 		commonIntParsingError(w, r, err)
 		domain := db.GetDomainById(db_connection, domainId)
-		templateData := setCommonTemplateTata(TemplateData{}, r, w)
+		templateData := setCommonTemplateData(r, w)
 		templateData.Data = map[string]any{"domain": domain, "edit_page": true}
 		generateHTML(w, templateData, "layout", "edit_domain_details")
 	case http.MethodPost:
@@ -72,13 +72,16 @@ func EditDomainSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
 func DeleteDomain(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		db_connection := GetDbConnection(r)
 		domainId, err := strconv.Atoi(getUrlVars(r, "domain_id"))
 		commonIntParsingError(w, r, err)
-		db.DeleteDomain(db_connection, domainId)
+		err = db.DeleteDomain(db_connection, domainId)
+		if err != nil {
+			log.Printf("Error Deleting Domain %d: %v", domainId, err)
+			// TODO set message
+		}
 		http.Redirect(w, r, "/domains", http.StatusSeeOther)
 	}
 }

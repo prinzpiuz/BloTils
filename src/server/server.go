@@ -204,7 +204,10 @@ func authMiddleware(next http.Handler) http.Handler {
 				http.Redirect(w, r, nextpage, http.StatusFound)
 			}
 			if session.IsExpired() {
-				db.DeleteSessionWithSessionId(db_connection, session.SessionId)
+				err := db.DeleteSessionWithSessionId(db_connection, session.SessionId)
+				if err != nil {
+					log.Println(err)
+				}
 				http.Redirect(w, r, nextpage, http.StatusFound)
 			}
 			if session.User.IsNormalUser() && slices.Contains(AdminOnly, r.URL.Path) {

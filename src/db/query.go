@@ -54,7 +54,6 @@ const getAllUserDomains = `SELECT
 					   	 d.created_time
 					   DESC`
 
-
 // deleteDomain is a SQL query that deletes a specific domain from the Domain table
 // based on the provided domain ID. It removes the entire domain record matching
 // the given identifier.
@@ -169,6 +168,8 @@ const resetTokenAndUpdatePassword = `BEGIN TRANSACTION;
 // The query selects the token, user ID, expiry time, usage status, user ID, and email from the PasswordResetToken
 // and User tables. It joins the tables on user ID and filters for an unused token, allowing verification
 // of a valid, unused password reset token for a specific user.
+//
+//nolint:gosec
 const getTokenUser = `SELECT prt.token,
 							prt.user_id,
 							prt.expiry_time,
@@ -179,7 +180,7 @@ const getTokenUser = `SELECT prt.token,
        				 JOIN USER u
          			 ON u.id = prt.user_id
 					 WHERE  prt.token = ?
-       				 AND prt.used = 0 `
+       				 AND prt.used = 0`
 
 // getSessionUser is a SQL query that retrieves comprehensive user and session details
 // by joining the Sessions and User tables. The query selects session ID, user information,
@@ -244,7 +245,7 @@ const approveUser = `UPDATE USER
 					 SET user_role = 1,
 						 is_active = 1,
 						 user_status = 1
-					WHERE  USER.id = ? 
+					WHERE  USER.id = ?
 					AND USER.user_status = 2`
 
 // deleteUser is a SQL query that removes a specific user record from the USER table

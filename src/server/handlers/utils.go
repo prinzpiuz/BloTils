@@ -28,16 +28,16 @@ import (
 )
 
 var (
-	UnAuthorized     = errors.New("UnAuthorized")
-	BadRequest       = errors.New("Bad Request")
-	NotFound         = errors.New("Not Found")
-	Unsupported      = errors.New("Unsupported")
-	Internal         = errors.New("Internal Server Error")
-	Timeout          = errors.New("Timeout")
-	BadGateway       = errors.New("Bad Gateway")
-	Service          = errors.New("Service Unavailable")
-	MethodNotAllowed = errors.New("Method Not Allowed")
-	InvalidToken     = errors.New("Invalid Token")
+	ErrUnAuthorized     = errors.New("unauthorized")
+	ErrBadRequest       = errors.New("bad request")
+	ErrNotFound         = errors.New("not found")
+	ErrUnsupported      = errors.New("unsupported")
+	ErrInternal         = errors.New("internal server error")
+	ErrTimeout          = errors.New("timeout")
+	ErrBadGateway       = errors.New("bad gateway")
+	ErrService          = errors.New("service unavailable")
+	ErrMethodNotAllowed = errors.New("method not allowed")
+	ErrInvalidToken     = errors.New("invalid token")
 )
 
 const (
@@ -135,14 +135,14 @@ func checkForDomain(r *http.Request, domain_name string, context any) (db.Domain
 	db_connection := GetDbConnection(r)
 	domain := db.GetDomain(db_connection, domain_name)
 	if domain.IsEmpty() {
-		msg := "This Domain(%s) Is Not Configured For Blotils"
+		msg := "this domain(%s) is not configured for blotils"
 		log.Printf(msg, domain_name)
 		return db.Domain{}, fmt.Errorf(msg, domain_name)
 	}
 	_, ok := context.(ClapCounter)
 	if ok {
 		if !domain.LikesEnabled() {
-			msg := "Like Counting Is Not Enabled For This Domain (%s)"
+			msg := "like counting is not enabled for this domain (%s)"
 			log.Printf(msg, domain_name)
 			return db.Domain{}, fmt.Errorf(msg, domain_name)
 		}
@@ -185,7 +185,7 @@ func getPath(r *http.Request, w http.ResponseWriter) string {
 // HttpOnly, Secure, and SameSite=None attributes to ensure it is only accessible by the server
 // and is transmitted securely over HTTPS.
 func setCookie(r *http.Request, w http.ResponseWriter, name string, value string, expires time.Time) {
-	var secure bool = false
+	var secure = false
 	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
 	if ok && serverConfig != nil {
 		secure = serverConfig.IsProduction
@@ -238,8 +238,9 @@ type TemplateData struct {
 // set_template_data sets the default title and meta description for the template data if they are not already set.
 // It also sets the static file path from the server configuration.
 // The updated template data is returned.
-func setCommonTemplateTata(data TemplateData, r *http.Request, w http.ResponseWriter) TemplateData {
+func setCommonTemplateData(r *http.Request, w http.ResponseWriter) TemplateData {
 	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
+	data := TemplateData{}
 	if ok && serverConfig != nil {
 		if data.Title == "" {
 			data.Title = "BloTils - aka Blog uTils"
@@ -314,7 +315,11 @@ func isValidEmail(email string) bool {
 // Returns a unique, random token suitable for use in security-sensitive contexts.
 func generateSecureToken() string {
 	b := make([]byte, 32)
-	rand.Read(b)
+	_, err := rand.Read(b)
+	if err != nil {
+		log.Printf("Error Generating Secure Token %v", err)
+		panic(err)
+	}
 	return base64.URLEncoding.EncodeToString(b)
 }
 
@@ -334,7 +339,7 @@ func generateSessionToken(r *http.Request, w http.ResponseWriter) string {
 // sendMessagePage renders a message page with a single message using the provided HTTP request and response writer.
 // It sets common template data, adds the specified message, and generates an HTML page using the "layout" and "message_page" templates.
 func sendMessagePage(r *http.Request, w http.ResponseWriter, msg string) {
-	templateData := setCommonTemplateTata(TemplateData{}, r, w)
+	templateData := setCommonTemplateData(r, w)
 	templateData.Messages = []string{msg}
 	generateHTML(w, templateData, "layout", "message_page")
 }
@@ -390,6 +395,8 @@ func getToggleValues(r *http.Request, fieldName string) int {
 
 }
 
+// commonIntParsingError handles errors that occur during integer parsing by logging the error
+// and redirecting the user to the domains page if an error is encountered.
 func commonIntParsingError(w http.ResponseWriter, r *http.Request, err error) {
 	if err != nil {
 		log.Printf("Error parsing domain_id: %v", err)

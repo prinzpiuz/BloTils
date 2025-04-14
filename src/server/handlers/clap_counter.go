@@ -101,7 +101,7 @@ func add_like_to_page(r *http.Request, clapCounter ClapCounter, doamin_id int) e
 // error response.
 func GetClaps(w http.ResponseWriter, r *http.Request) {
 	var clapCounter ClapCounter
-	var continue_counting bool = true
+	var continue_counting = true
 	content_type_err := checkForRequestContentType(w, r)
 	if content_type_err != nil {
 		return
@@ -120,7 +120,7 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 	if domain_check_err != nil {
 		continue_counting = false
 		clapCounter.SetClapCounter(clapCounter.URL, domain_check_err.Error(), 0, false)
-		setHTTPError(w, UnAuthorized, ClapCounterHandler, http.StatusForbidden)
+		setHTTPError(w, ErrUnAuthorized, ClapCounterHandler, http.StatusForbidden)
 	}
 	if continue_counting {
 		likes := get_likes(r, clapCounter)
@@ -135,13 +135,13 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					log.Printf("Error Updating Like Count: %v", err)
 					clapCounter.SetClapCounter(clapCounter.URL, ClapCountedFailed, likes.Count, false)
-					setHTTPError(w, Internal, ClapCounterHandler, http.StatusInternalServerError)
+					setHTTPError(w, ErrInternal, ClapCounterHandler, http.StatusInternalServerError)
 				}
 				clapCounter.SetClapCounter(clapCounter.URL, ClapCountedSuccess, likes.Count+1, true)
 			}
 			update_ip_like_count(r, clapCounter)
 		default:
-			setHTTPError(w, MethodNotAllowed, ClapCounterHandler, http.StatusMethodNotAllowed)
+			setHTTPError(w, ErrMethodNotAllowed, ClapCounterHandler, http.StatusMethodNotAllowed)
 		}
 	}
 	jsonData, err := json.Marshal(clapCounter)
@@ -159,6 +159,6 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 
 // ClapCounterPage renders the HTML template for the clap counter page.
 func ClapCounterPage(w http.ResponseWriter, r *http.Request) {
-	templateData := setCommonTemplateTata(TemplateData{}, r, w)
+	templateData := setCommonTemplateData(r, w)
 	generateHTML(w, templateData, "layout", "clap_counter")
 }

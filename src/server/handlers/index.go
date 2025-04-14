@@ -6,7 +6,7 @@ import (
 )
 
 func IndexPage(w http.ResponseWriter, r *http.Request) {
-	templateData := setCommonTemplateTata(TemplateData{}, r, w)
+	templateData := setCommonTemplateData(r, w)
 	templateData.Data = map[string]interface{}{"indexPage": true}
 	generateHTML(w, templateData, "layout", "index")
 

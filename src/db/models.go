@@ -107,7 +107,7 @@ type User struct {
 }
 
 func (user User) UserExist() bool {
-	return !(user == User{})
+	return !(user == User{}) //nolint:staticcheck
 }
 
 func (user User) CheckPassword(passwordHash string) bool {
