@@ -1,5 +1,41 @@
 {{ define "content" }}
-
-<h1>BloTils</h1>
+{{ template "logo.html" . }}
+<div class="description-section description">
+  <p>
+    This application radically transforms your static sites by adding powerful
+    functionalities,
+  </p>
+  <p style="margin-top: 0">
+    making them dynamic and interactive. With BloTils, You can enhance your
+    static sites like a database connected application.
+  </p>
+</div>
+<div class="middle-section cta-buttons">
+  <a href="/docs">Docs</a>
+  <a href="https://github.com/prinzpiuz/BloTils">Source</a>
+</div>
+<div class="feature-section" id="features">
+  <h2>Features</h2>
+  <div class="feature-list">
+    <div class="feature">
+      <h3>Likes Counter</h3>
+    </div>
+    <div class="feature">
+      <h3>Comments</h3>
+    </div>
+    <div class="feature">
+      <h3>Simple Analytics</h3>
+    </div>
+    <div class="feature">
+      <h3>Email Subscription</h3>
+    </div>
+    <div class="feature">
+      <h3>Forms</h3>
+    </div>
+    <div class="feature">
+      <h3>Dynamic Content</h3>
+    </div>
+  </div>
+</div>
 
 {{ end }}

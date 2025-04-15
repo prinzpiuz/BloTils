@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-const handlerReference = "ClapCounter"
+const ClapCounterHandler = "ClapCounter"
 
 // Message constants for ClapCounter
 const (
@@ -42,7 +42,7 @@ func (clapCounter *ClapCounter) SetClapCounter(url string, message string, count
 // It retrieves the database connection from the HTTP request and calls the UpdateIPLikeCount function
 // in the db package to update the like count for the IP address.
 func update_ip_like_count(r *http.Request, clapCounter ClapCounter) {
-	db_connection := get_db_connection(r)
+	db_connection := GetDbConnection(r)
 	db.UpdateIPLikeCount(db_connection, clapCounter.URL, clapCounter.Page, clapCounter.remote_addr)
 }
 
@@ -50,7 +50,7 @@ func update_ip_like_count(r *http.Request, clapCounter ClapCounter) {
 // It takes an http.Request and a ClapCounter as input, and returns a db.Likes struct
 // containing the like count. If the like count is empty, it returns an empty db.Likes struct.
 func get_likes(r *http.Request, clapCounter ClapCounter) db.Likes {
-	db_connection := get_db_connection(r)
+	db_connection := GetDbConnection(r)
 	likes := db.GetLikes(db_connection, clapCounter.URL, clapCounter.Page)
 	if likes.IsEmpty() {
 		return db.Likes{}
@@ -63,7 +63,7 @@ func get_likes(r *http.Request, clapCounter ClapCounter) db.Likes {
 // liked IP addresses from the database and returns true if the remote address is found in the list,
 // indicating the user has already liked the content.
 func already_liked_IP(r *http.Request, clapCounter ClapCounter) bool {
-	db_connection := get_db_connection(r)
+	db_connection := GetDbConnection(r)
 	liked_ips := db.GetLikedIP(db_connection, clapCounter.URL, clapCounter.Page, clapCounter.remote_addr)
 	return !liked_ips.IsEmpty()
 }
@@ -73,7 +73,7 @@ func already_liked_IP(r *http.Request, clapCounter ClapCounter) bool {
 // UpdateLikeCount function in the db package to update the like count for the given page.
 // If the update is successful, it returns nil, otherwise it returns an error.
 func add_like_to_page(r *http.Request, clapCounter ClapCounter, doamin_id int) error {
-	db_connection := get_db_connection(r)
+	db_connection := GetDbConnection(r)
 	return db.UpdateLikeCount(db_connection, clapCounter.Page, doamin_id)
 }
 
@@ -101,26 +101,26 @@ func add_like_to_page(r *http.Request, clapCounter ClapCounter, doamin_id int) e
 // error response.
 func GetClaps(w http.ResponseWriter, r *http.Request) {
 	var clapCounter ClapCounter
-	var continue_counting bool = true
-	content_type_err := check_for_request_content_type(w, r)
+	var continue_counting = true
+	content_type_err := checkForRequestContentType(w, r)
 	if content_type_err != nil {
 		return
 	}
 	clapCounter.remote_addr = r.RemoteAddr
-	clapCounter.URL = get_domain(r.Referer())
-	clapCounter.Page = get_path(r, w)
+	clapCounter.URL = getDomain(r.Referer())
+	clapCounter.Page = getPath(r, w)
 	if clapCounter.Page == "" {
-		err := decode_request(r, w, &clapCounter)
+		err := decodeRequest(r, w, &clapCounter)
 		if err != nil {
 			log.Printf("Error decoding request: %v", err)
 			return
 		}
 	}
-	domain, domain_check_err := check_for_domain(r, clapCounter.URL, clapCounter)
+	domain, domain_check_err := checkForDomain(r, clapCounter.URL, clapCounter)
 	if domain_check_err != nil {
 		continue_counting = false
 		clapCounter.SetClapCounter(clapCounter.URL, domain_check_err.Error(), 0, false)
-		setHTTPError(w, UnAuthorized, handlerReference, http.StatusForbidden)
+		setHTTPError(w, ErrUnAuthorized, ClapCounterHandler, http.StatusForbidden)
 	}
 	if continue_counting {
 		likes := get_likes(r, clapCounter)
@@ -131,17 +131,17 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 			if already_liked_IP(r, clapCounter) {
 				clapCounter.SetClapCounter(clapCounter.URL, ClapAlreadyCounted, likes.Count, false)
 			} else {
-				err := add_like_to_page(r, clapCounter, domain.ID)
+				err := add_like_to_page(r, clapCounter, domain.Id)
 				if err != nil {
 					log.Printf("Error Updating Like Count: %v", err)
 					clapCounter.SetClapCounter(clapCounter.URL, ClapCountedFailed, likes.Count, false)
-					setHTTPError(w, Internal, handlerReference, http.StatusInternalServerError)
+					setHTTPError(w, ErrInternal, ClapCounterHandler, http.StatusInternalServerError)
 				}
 				clapCounter.SetClapCounter(clapCounter.URL, ClapCountedSuccess, likes.Count+1, true)
 			}
 			update_ip_like_count(r, clapCounter)
 		default:
-			setHTTPError(w, MethodNotAllowed, handlerReference, http.StatusMethodNotAllowed)
+			setHTTPError(w, ErrMethodNotAllowed, ClapCounterHandler, http.StatusMethodNotAllowed)
 		}
 	}
 	jsonData, err := json.Marshal(clapCounter)
@@ -159,10 +159,6 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 
 // ClapCounterPage renders the HTML template for the clap counter page.
 func ClapCounterPage(w http.ResponseWriter, r *http.Request) {
-	templateData := set_template_data(TemplateData{}, r)
-	err := generateHTML(w, templateData, "layout", "clap_counter")
-	if err != nil {
-		log.Printf("Error Generating HTML: %v", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	templateData := setCommonTemplateData(r, w)
+	generateHTML(w, templateData, "layout", "clap_counter")
 }

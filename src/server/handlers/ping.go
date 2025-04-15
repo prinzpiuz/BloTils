@@ -11,7 +11,7 @@ import (
 // It also checks the connection to the database and returns an error if the connection fails.
 func Ping(w http.ResponseWriter, r *http.Request) {
 	msg := "pong"
-	db := get_db_connection(r)
+	db := GetDbConnection(r)
 	if db != nil {
 		err := db.Ping()
 		if err != nil {

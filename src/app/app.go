@@ -2,11 +2,11 @@ package app
 
 import (
 	"BloTils/src/server"
+	"BloTils/src/server/handlers"
 	"BloTils/src/server/routes"
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	fp "path/filepath"
 )
 
@@ -28,6 +28,11 @@ func (app *App) Start() {
 	app.Server.Start()
 }
 
+func (app *App) CreateAdmin() {
+	logo(app.Config)
+	handlers.CreateAdmin(app.Server.Config.DB.Connection)
+}
+
 func LoadConfig(filepath string) Config {
 	config, err := loadConfigFromFile(filepath)
 	if err != nil {
@@ -41,13 +46,14 @@ func LoadConfig(filepath string) Config {
 	config.BaseDirectory = baseDir
 	config.ServerConfig.BaseDirectory = baseDir
 	config.ServerConfig.DB.DBBaseDirectory = fp.Join(baseDir, "src/db")
+	config.ServerConfig.IsProduction = config.Env == "production"
 	return config
 }
 
 var ErrLoadingConfig = fmt.Errorf("error loading config from file")
 
 func loadConfigFromFile(fpath string) (Config, error) {
-	fp := filepath.Clean(fpath)
+	fp := fp.Clean(fpath)
 	jsonFile, err := os.Open(fp)
 	if err != nil {
 		return Config{}, fmt.Errorf("%w: %v", ErrLoadingConfig, err)

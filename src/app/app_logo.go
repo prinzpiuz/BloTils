@@ -29,7 +29,7 @@ func getPort(c Config) string {
 func logo(c Config) {
 	fmt.Print(logoStyle.Render(appLogo))
 	fmt.Println()
-	fmt.Print("Utilities For Your Blog Engine\n")
+	fmt.Print("Utilities For Your Static Blog\n")
 	fmt.Print(getversion(c))
 	fmt.Print(getPort(c))
 	fmt.Println()

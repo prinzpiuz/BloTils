@@ -2,15 +2,12 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 )
 
 func IndexPage(w http.ResponseWriter, r *http.Request) {
-	templateData := set_template_data(TemplateData{}, r)
-	err := generateHTML(w, templateData, "layout", "index")
-	if err != nil {
-		log.Printf("Error Generating HTML: %v", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	templateData := setCommonTemplateData(r, w)
+	templateData.Data = map[string]interface{}{"indexPage": true}
+	generateHTML(w, templateData, "layout", "index")
+
 }

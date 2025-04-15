@@ -1,14 +1,16 @@
 // Package db provides functionality for interacting with the application's database.
 package db
 
-import "time"
+import (
+	"time"
+)
 
 // DomainSettings represents the settings for a domain, including whether likes and comments are enabled,
 // and the timestamp of the last update.
 type DomainSettings struct {
-	id        int
-	likes     bool
-	comments  bool
+	Id        int
+	likes     int
+	comments  int
 	timestamp time.Time
 }
 
@@ -18,9 +20,10 @@ type DomainSettings struct {
 // The domain field contains the domain name.
 // The timestamp field contains the timestamp for when the domain was created or updated.
 type Domain struct {
-	ID        int
-	settings  DomainSettings
-	domain    string
+	Id        int
+	User      User
+	Settings  DomainSettings
+	Domain    string
 	timestamp time.Time
 }
 
@@ -31,12 +34,25 @@ func (domain Domain) IsEmpty() bool {
 
 // LikesEnabled returns whether likes are enabled for the given Domain.
 func (domain Domain) LikesEnabled() bool {
-	return domain.settings.likes
+	return domain.Settings.likes == 1
 }
 
 // CommentsEnabled returns whether comments are enabled for the given Domain.
 func (domain Domain) CommentsEnabled() bool {
-	return domain.settings.comments
+	return domain.Settings.comments == 1
+}
+
+func DomainFactory(user User, domain string, likes int, comments int, id int) *Domain {
+	settings := DomainSettings{
+		likes:    likes,
+		comments: comments,
+	}
+	return &Domain{
+		Id:       id,
+		User:     user,
+		Settings: settings,
+		Domain:   domain,
+	}
 }
 
 // Like represents a like for a domain and URI.
@@ -58,7 +74,7 @@ func (likes Likes) IsEmpty() bool {
 }
 
 func (likes Likes) GetDomainID() int {
-	return likes.Domain.ID
+	return likes.Domain.Id
 }
 
 // LikedIPs represents a record of an IP address that has liked something, along with the count of likes and the timestamp of the last like.
@@ -73,4 +89,107 @@ type LikedIPs struct {
 
 func (likedIPs LikedIPs) IsEmpty() bool {
 	return likedIPs == LikedIPs{}
+}
+
+// User Roles 1: Admin
+// User Roles 2: Normal User
+// User Status 1: Approved
+// User Status 2: Requested
+// User Status 3: Denied
+type User struct {
+	Id           int
+	Email        string
+	PasswordHash string
+	userRole     int
+	IsActive     bool
+	userStatus   int
+	timestamp    time.Time
+}
+
+func (user User) UserExist() bool {
+	return !(user == User{}) //nolint:staticcheck
+}
+
+func (user User) CheckPassword(passwordHash string) bool {
+	return user.PasswordHash == passwordHash
+}
+
+func (user User) IsAdmin() bool {
+	return user.userRole == 1
+}
+
+func (user User) IsNormalUser() bool {
+	return user.userRole == 2
+}
+
+func (user User) UserStatusApproved() bool {
+	return user.userStatus == 1
+}
+
+func (user User) UserStatusRequested() bool {
+	return user.userStatus == 2
+}
+
+func (user User) UserStatusDenied() bool {
+	return user.userStatus == 2
+}
+
+func (user User) UserRole() string {
+	switch user.userRole {
+	case 1:
+		return "Admin"
+	case 2:
+		return "Normal User"
+	}
+	return "Unknown"
+}
+
+func (user User) UserStatus() string {
+	switch user.userStatus {
+	case 1:
+		return "Approved"
+	case 2:
+		return "Requested"
+	case 3:
+		return "Denied"
+	}
+	return "Unknown"
+}
+
+type PasswordResetToken struct {
+	Token      string
+	User       User
+	ExpiryTime time.Time
+	Used       bool
+}
+
+func (prt PasswordResetToken) IsEmpty() bool {
+	return prt == PasswordResetToken{}
+}
+
+func (prt PasswordResetToken) IsExpired() bool {
+	return prt.ExpiryTime.Before(time.Now())
+}
+
+func (prt PasswordResetToken) IsUsed() bool {
+	return prt.Used
+}
+
+func (prt PasswordResetToken) IsValid() bool {
+	return !prt.IsExpired() && !prt.IsUsed() && !prt.IsEmpty()
+}
+
+type Session struct {
+	SessionId string
+	User      User
+	timestamp time.Time
+	Expiry    time.Time
+}
+
+func (session Session) IsEmpty() bool {
+	return session == Session{}
+}
+
+func (session Session) IsExpired() bool {
+	return session.Expiry.Before(time.Now())
 }

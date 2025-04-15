@@ -75,9 +75,8 @@ func TestGetClaps(t *testing.T) {
 			req = req.WithContext(ctx)
 			req.Header.Set("Content-Type", tt.contentType)
 			req.Header.Set("Referer", tt.referer)
-			mock.ExpectQuery(
-				`^SELECT \* FROM Domain\s+JOIN DomainSettings\s+ON Domain\.id = DomainSettings\.id\s+WHERE domain = \?$`,
-			).
+			const expectedQuery = `SELECT d.id, d.settings_id, d.domain, d.created_time, ds.id, ds.likes, ds.comments, ds.created_time FROM Domain d JOIN DomainSettings ds ON d.id = ds.id WHERE d.domain = ?`
+			mock.ExpectQuery(expectedQuery).
 				WithArgs("example.com").
 				WillReturnRows(
 					sqlmock.NewRows([]string{
@@ -136,9 +135,8 @@ func TestGetClapsWithBody(t *testing.T) {
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Referer", "https://example.com/")
-	mock.ExpectQuery(
-		`^SELECT \* FROM Domain\s+JOIN DomainSettings\s+ON Domain\.id = DomainSettings\.id\s+WHERE domain = \?$`,
-	).
+	expectedQuery := `SELECT d.id, d.settings_id, d.domain, d.created_time, ds.id, ds.likes, ds.comments, ds.created_time FROM Domain d JOIN DomainSettings ds ON d.id = ds.id WHERE d.domain = ?`
+	mock.ExpectQuery(expectedQuery).
 		WithArgs("example.com").
 		WillReturnRows(
 			sqlmock.NewRows([]string{
@@ -247,9 +245,8 @@ func TestGetClapsWithBodyForAlreadyLiked(t *testing.T) {
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Referer", "https://example.com/")
-	mock.ExpectQuery(
-		`^SELECT \* FROM Domain\s+JOIN DomainSettings\s+ON Domain\.id = DomainSettings\.id\s+WHERE domain = \?$`,
-	).
+	expectedQuery := `SELECT d.id, d.settings_id, d.domain, d.created_time, ds.id, ds.likes, ds.comments, ds.created_time FROM Domain d JOIN DomainSettings ds ON d.id = ds.id WHERE d.domain = ?`
+	mock.ExpectQuery(expectedQuery).
 		WithArgs("example.com").
 		WillReturnRows(
 			sqlmock.NewRows([]string{
