@@ -8,7 +8,10 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/didip/tollbooth/v8 v8.0.1
 	github.com/gorilla/mux v1.8.1
-	github.com/mattn/go-sqlite3 v1.14.27
+	github.com/mattn/go-sqlite3 v1.14.28
+	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
+	golang.org/x/crypto v0.36.0
+	golang.org/x/term v0.30.0
 )
 
 require (
@@ -16,13 +19,8 @@ require (
 	github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/go-pkgz/expirable-cache/v3 v3.0.0 // indirect
-	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
-	github.com/sendgrid/sendgrid-go v3.16.0+incompatible // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	golang.org/x/crypto v0.36.0 // indirect
-	golang.org/x/term v0.30.0 // indirect
-	golang.org/x/time v0.9.0 // indirect
 )
 
 require (
