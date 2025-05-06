@@ -35,12 +35,9 @@ type Server struct {
 }
 
 type ServerConfig struct {
-	Host          string
-	Port          int
-	DB            db.DB
-	StaticFiles   string
-	BaseDirectory string
-	IsProduction  bool
+	Host        string
+	Port        int
+	StaticFiles string
 }
 
 func (server *Server) Start() {
@@ -57,12 +54,8 @@ func (c *ServerConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }
 
-func New(config ServerConfig) *Server {
+func InitServer(config ServerConfig) *Server {
 	router := mux.NewRouter()
-	err := config.DB.Initialize()
-	if err != nil {
-		log.Fatalf("Error Initializing DB: %v", err)
-	}
 	// order matters
 	router.Use(config.ContextUpdateMiddleware)
 	router.Use(mux.CORSMethodMiddleware(router))

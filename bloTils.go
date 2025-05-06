@@ -4,13 +4,13 @@ import (
 	"BloTils/src/app"
 	"flag"
 	"os"
-	"path/filepath"
+
+	"github.com/knadh/koanf/v2"
 )
 
 func main() {
-	fp := filepath.Join(".", "config.json")
-	config := app.LoadConfig(fp)
-	app := app.New(config)
+	var config = koanf.New(".")
+	app := app.InitApp(config)
 	createAdmin := flag.Bool("createadmin", false, "Create A Admin Account")
 	flag.Parse()
 	if *createAdmin {

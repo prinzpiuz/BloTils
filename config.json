@@ -1,16 +1,22 @@
 {
+  "AppConfig": {
+    "Name": "BloTils",
+    "Version": "0.6.0",
+    "Env": "dev",
+    "BaseDirectory": "."
+  },
   "ServerConfig": {
     "Host": "",
     "Port": 8000,
-    "DB": {
-      "DBLocation": "./BloTils.db",
-      "Vacuum": "full",
-      "ForeignKeys": true
-    },
     "StaticFiles": "static"
   },
-
-  "Name": "BloTils",
-  "Version": "0.6.0",
-  "Env": "dev"
+  "DBConfig": {
+    "DBLocation": "./BloTils.db",
+    "Vacuum": "full",
+    "ForeignKeys": true
+  },
+  "EmailConfig": {
+    "FromMail": "noreply@blotils.com",
+    "SendgridApiKey": ""
+  }
 }

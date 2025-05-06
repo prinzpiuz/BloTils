@@ -16,7 +16,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type DB struct {
+type DBConfig struct {
 	DBLocation      string
 	Vacuum          string
 	ForeignKeys     bool
@@ -40,7 +40,7 @@ func closeFile(fSrc source.Driver) {
 	}()
 }
 
-func (db *DB) Initialize() error {
+func InitDB(db DBConfig) error {
 	if _, err := os.Stat(db.DBLocation); errors.Is(err, os.ErrNotExist) {
 		log.Println("Database file does not exist, creating...")
 		_, err := os.Create(db.DBLocation)
@@ -104,6 +104,6 @@ func runMigrations(db *sql.DB, migrationFiles string) error {
 	return nil
 }
 
-func (db *DB) connection_string() string {
+func (db *DBConfig) connection_string() string {
 	return fmt.Sprintf("%s?_auto_vacuum=%s&_foreign_keys=%t", db.DBLocation, db.Vacuum, db.ForeignKeys)
 }
