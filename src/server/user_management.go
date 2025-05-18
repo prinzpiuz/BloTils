@@ -1,7 +1,8 @@
-package handlers
+package server
 
 import (
 	"BloTils/src/db"
+	mailer "BloTils/src/email"
 	"database/sql"
 	"fmt"
 	"log"
@@ -126,7 +127,7 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 			token := generateSecureToken()
 			err := db.SetRestToken(db_connection, token, user.Id)
 			if err == nil {
-				resetPasswordMail(email, token)
+				mailer.ResetPasswordMail(email, token)
 				msg := `You'll recive your reset link in mail, if your email is verified`
 				sendMessagePage(r, w, msg)
 				return

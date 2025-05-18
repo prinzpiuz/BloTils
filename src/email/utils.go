@@ -1,4 +1,4 @@
-package email
+package mailer
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ func sendMail(toMail string, subject string, htmlContent string) error {
 	return nil
 }
 
-func resetPasswordMail(email string, token string) {
+func ResetPasswordMail(email string, token string) {
 	resetLink := fmt.Sprintf("http://blotils.com:8000/reset_password/%s", token)
 	subject := "Blotils Password Rest Link"
 	htmlContent := fmt.Sprintf(`<h3>Rest Your Password <a href=%s>Here</a></h3>`, resetLink)

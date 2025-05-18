@@ -2,6 +2,7 @@
 package db
 
 import (
+	"BloTils/src/models"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -15,14 +16,6 @@ import (
 	"github.com/golang-migrate/migrate/source/file"
 	_ "github.com/mattn/go-sqlite3"
 )
-
-type DBConfig struct {
-	DBLocation      string
-	Vacuum          string
-	ForeignKeys     bool
-	Connection      *sql.DB
-	DBBaseDirectory string
-}
 
 func closeDB(new_db *sql.DB) {
 	defer func() {
@@ -40,7 +33,7 @@ func closeFile(fSrc source.Driver) {
 	}()
 }
 
-func InitDB(db DBConfig) error {
+func InitDB(db *models.DBConfig) error {
 	if _, err := os.Stat(db.DBLocation); errors.Is(err, os.ErrNotExist) {
 		log.Println("Database file does not exist, creating...")
 		_, err := os.Create(db.DBLocation)
@@ -48,7 +41,7 @@ func InitDB(db DBConfig) error {
 			return err
 		}
 	}
-	new_db, err := sql.Open("sqlite3", db.connection_string())
+	new_db, err := sql.Open("sqlite3", connectionString(db))
 	if err != nil {
 		closeDB(new_db)
 		return err
@@ -76,9 +69,7 @@ func runMigrations(db *sql.DB, migrationFiles string) error {
 		log.Printf("Error Connecting With SQLite Instance: %s", err)
 		return err
 	}
-
 	fSrc, err := (&file.File{}).Open(migrationFiles)
-	print()
 	if err != nil {
 		closeFile(fSrc)
 		log.Printf("Error Getting Migration Files: %s", err)
@@ -104,6 +95,6 @@ func runMigrations(db *sql.DB, migrationFiles string) error {
 	return nil
 }
 
-func (db *DBConfig) connection_string() string {
+func connectionString(db *models.DBConfig) string {
 	return fmt.Sprintf("%s?_auto_vacuum=%s&_foreign_keys=%t", db.DBLocation, db.Vacuum, db.ForeignKeys)
 }

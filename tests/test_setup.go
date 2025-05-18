@@ -1,30 +1,37 @@
 package handlers
 
 import (
-	"BloTils/src/app"
-	"BloTils/src/db"
-	"BloTils/src/server"
+	"BloTils/src/models"
 )
 
-var TestDBConfig = db.DB{
+var TestDBConfig = models.DBConfig{
 	DBLocation:      "./Test_BloTils.db",
 	Vacuum:          "full",
 	ForeignKeys:     true,
 	DBBaseDirectory: "../src/db",
 }
 
-var ServerConfig = server.ServerConfig{
-	Host:          "",
-	Port:          8080,
-	DB:            TestDBConfig,
-	StaticFiles:   "static",
-	BaseDirectory: "../",
+var ServerConfig = models.ServerConfig{
+	Host:        "",
+	Port:        8080,
+	StaticFiles: "static",
 }
 
-var AppConfig = app.Config{
-	ServerConfig:  ServerConfig,
+var AppConfig = models.AppConfig{
 	Name:          "BloTils",
 	Version:       "0.0.1",
 	Env:           "test",
 	BaseDirectory: "../",
+}
+
+var EmailConfig = models.EmailSettings{
+	FromMail:       "noreply@blo-tils.com",
+	SendgridApiKey: "",
+}
+
+var App = &models.App{
+	AppConfig:     AppConfig,
+	ServerConfig:  ServerConfig,
+	DBConfig:      TestDBConfig,
+	EmailSettings: EmailConfig,
 }

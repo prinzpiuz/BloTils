@@ -1,4 +1,4 @@
-package mailer
+package models
 
 type EmailSettings struct {
 	FromMail       string

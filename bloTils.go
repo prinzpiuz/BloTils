@@ -2,6 +2,7 @@ package main
 
 import (
 	"BloTils/src/app"
+	"BloTils/src/utils"
 	"flag"
 	"os"
 
@@ -10,12 +11,12 @@ import (
 
 func main() {
 	var config = koanf.New(".")
-	app := app.InitApp(config)
+	appConfig := app.InitApp(config)
 	createAdmin := flag.Bool("createadmin", false, "Create A Admin Account")
 	flag.Parse()
 	if *createAdmin {
-		app.CreateAdmin()
+		utils.CreateAdmin(*appConfig)
 		os.Exit(0)
 	}
-	app.Start()
+	app.Start(*appConfig)
 }
