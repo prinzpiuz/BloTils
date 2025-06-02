@@ -9,7 +9,7 @@ require (
 	github.com/didip/tollbooth/v8 v8.0.1
 	github.com/gorilla/mux v1.8.1
 	github.com/mattn/go-sqlite3 v1.14.28
-	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
+	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
 	golang.org/x/crypto v0.36.0
 	golang.org/x/term v0.30.0
 )
