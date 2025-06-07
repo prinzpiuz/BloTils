@@ -13,7 +13,7 @@ require (
 	github.com/knadh/koanf/v2 v2.2.0
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
-	golang.org/x/crypto v0.36.0
+	golang.org/x/crypto v0.39.0
 	golang.org/x/term v0.32.0
 )
 
