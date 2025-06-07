@@ -36,3 +36,5 @@ BloTils.db
 core
 
 .env
+
+BloTils.db-journal

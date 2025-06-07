@@ -2,7 +2,6 @@ package handlers_test
 
 import (
 	"BloTils/src/server"
-	"BloTils/src/server/handlers"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -67,15 +66,14 @@ func TestPing(t *testing.T) {
 				} else {
 					mock.ExpectPing()
 				}
-				test_setup.ServerConfig.DB.Connection = mockDB
-				ctx := context.WithValue(req.Context(), server.ServerConfigContext, &test_setup.ServerConfig)
+				test_setup.App.DBConfig.Connection = mockDB
+				ctx := context.WithValue(req.Context(), server.AppContext, *test_setup.App)
 				req = req.WithContext(ctx)
 
 			}
 			w := httptest.NewRecorder()
-			handlers.Ping(w, req)
+			server.Ping(w, req)
 
-			// Verify mock expectatioserver.ContextServerConfigns
 			if tt.dbAvailable {
 				if err := mock.ExpectationsWereMet(); err != nil {
 					t.Errorf("unfulfilled expectations: %v", err)

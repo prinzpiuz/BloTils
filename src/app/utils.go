@@ -1,6 +1,7 @@
 package app
 
 import (
+	"BloTils/src/models"
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
@@ -18,20 +19,10 @@ const appLogo = `
 ██████  █████ ██████   ██   ██ █████ ███████
 `
 
-func getversion(c Config) string {
-	return fmt.Sprintf("Version : %s\n", c.Version)
+func getversion(ac models.AppConfig) string {
+	return fmt.Sprintf("Version : %s\n", ac.Version)
 }
 
-func getPort(c Config) string {
-	return fmt.Sprintf("Server Running On %s:%d\n", c.ServerConfig.Host, c.ServerConfig.Port)
-}
-
-func logo(c Config) {
-	fmt.Print(logoStyle.Render(appLogo))
-	fmt.Println()
-	fmt.Print("Utilities For Your Static Blog\n")
-	fmt.Print(getversion(c))
-	fmt.Print(getPort(c))
-	fmt.Println()
-	fmt.Println()
+func getPort(sc models.ServerConfig) string {
+	return fmt.Sprintf("Server Running On %s:%d\n", sc.Host, sc.Port)
 }

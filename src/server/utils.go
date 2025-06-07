@@ -1,12 +1,14 @@
 // Package handlers provides HTTP request handlers for the application.
 // this page contains the utility functions for handlers
-package handlers
+package server
 
 import (
 	"BloTils/src/db"
-	"BloTils/src/server"
-	"crypto/rand"
+	"BloTils/src/models"
+	"context"
 	"database/sql"
+
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -46,6 +48,37 @@ const (
 	SessionCookie = "sessionID"
 	CSRFCookie    = "csrfToken"
 )
+
+// GetAppDataFromContext retrieves the application data from the given context.
+// It returns the App data if found, or an empty App if no data is present.
+// Panics if the context does not contain an App value with the AppContext key.
+func GetAppDataFromContext(context context.Context) models.App {
+	appData, ok := context.Value(AppContext).(models.App)
+	if !ok {
+		return models.App{}
+	}
+	return appData
+}
+
+// GetDBConfigFromContext retrieves the database configuration from the application context.
+// It returns the DBConfig from the app data, or an empty DBConfig if no configuration is found.
+func GetDBConfigFromContext(context context.Context) models.DBConfig {
+	appData := GetAppDataFromContext(context)
+	if appData.DBConfig.IsEmpty() {
+		return models.DBConfig{}
+	}
+	return appData.DBConfig
+}
+
+// GetDbConnection retrieves the database connection from the HTTP request context.
+// It returns the database connection if available, or nil if no connection is found.
+func GetDbConnection(r *http.Request) *sql.DB {
+	db := GetDBConfigFromContext(r.Context())
+	if db.IsEmpty() {
+		return nil
+	}
+	return db.Connection
+}
 
 // check_for_request_content_type checks the Content-Type header of the incoming HTTP request
 // and returns an error if it is not "application/json". This ensures that the server only
@@ -102,16 +135,6 @@ func decodeRequest(r *http.Request, w http.ResponseWriter, dst interface{}) erro
 	}
 	return nil
 
-}
-
-// get_db_connection returns the database connection stored in the server configuration
-// context. If the configuration is not available, it returns nil.
-func GetDbConnection(r *http.Request) *sql.DB {
-	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
-	if ok && serverConfig != nil {
-		return serverConfig.DB.Connection
-	}
-	return nil
 }
 
 func getDomain(url_string string) string {
@@ -186,9 +209,9 @@ func getPath(r *http.Request, w http.ResponseWriter) string {
 // and is transmitted securely over HTTPS.
 func setCookie(r *http.Request, w http.ResponseWriter, name string, value string, expires time.Time) {
 	var secure = false
-	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
-	if ok && serverConfig != nil {
-		secure = serverConfig.IsProduction
+	appData := GetAppDataFromContext(r.Context())
+	if !appData.AppConfig.IsEmpty() {
+		secure = appData.AppConfig.IsProduction()
 	}
 	cookie := http.Cookie{
 		Name:     name,
@@ -232,23 +255,23 @@ type TemplateData struct {
 	Messages  []string
 	Errors    []string
 	Session   *db.Session
-	Data      map[string]interface{}
+	Data      map[string]any
 }
 
 // set_template_data sets the default title and meta description for the template data if they are not already set.
 // It also sets the static file path from the server configuration.
 // The updated template data is returned.
 func setCommonTemplateData(r *http.Request, w http.ResponseWriter) TemplateData {
-	serverConfig, ok := r.Context().Value(server.ServerConfigContext).(*server.ServerConfig)
+	appData := GetAppDataFromContext(r.Context())
 	data := TemplateData{}
-	if ok && serverConfig != nil {
+	if !appData.IsEmpty() {
 		if data.Title == "" {
 			data.Title = "BloTils - aka Blog uTils"
 		}
 		if data.MetaDesc == "" {
 			data.MetaDesc = "A Blog Utils and Analytics Platform"
 		}
-		data.Static = serverConfig.StaticFiles
+		data.Static = appData.ServerConfig.StaticFiles
 	}
 	data.CSRFToken = generateCSRFToken(r, w)
 	data.Session = GetSessionData(r)
@@ -377,7 +400,7 @@ func validLogin(user db.User, password string) bool {
 // GetSessionData retrieves the session data from the HTTP request context.
 // If session data is found, it returns the session; otherwise, it returns an empty session.
 func GetSessionData(r *http.Request) *db.Session {
-	sessionData, ok := r.Context().Value(server.SessionContext).(*db.Session)
+	sessionData, ok := r.Context().Value(SessionContext).(*db.Session)
 	if ok {
 		return sessionData
 	}

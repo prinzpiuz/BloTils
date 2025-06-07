@@ -2,7 +2,6 @@ package handlers_test
 
 import (
 	"BloTils/src/server"
-	"BloTils/src/server/handlers"
 	test_setup "BloTils/tests"
 	"context"
 	"database/sql"
@@ -69,9 +68,9 @@ func TestGetClaps(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to create mock database in test %s : %v", t.Name(), err)
 			}
-			test_setup.ServerConfig.DB.Connection = mockDB
+			test_setup.App.DBConfig.Connection = mockDB
 			req = httptest.NewRequest(tt.method, tt.url, nil)
-			ctx := context.WithValue(req.Context(), server.ServerConfigContext, &test_setup.ServerConfig)
+			ctx := context.WithValue(req.Context(), server.AppContext, *test_setup.App)
 			req = req.WithContext(ctx)
 			req.Header.Set("Content-Type", tt.contentType)
 			req.Header.Set("Referer", tt.referer)
@@ -98,14 +97,14 @@ func TestGetClaps(t *testing.T) {
 						0,
 						time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)))
 			w := httptest.NewRecorder()
-			handlers.GetClaps(w, req)
+			server.GetClaps(w, req)
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("expected status %d, got %d", tt.expectedStatus, w.Code)
 			}
 
 			if w.Code == http.StatusOK {
-				var response handlers.ClapCounter
+				var response server.ClapCounter
 				err := json.NewDecoder(w.Body).Decode(&response)
 				if err != nil {
 					t.Fatalf("failed to decode response: %v", err)
@@ -128,10 +127,10 @@ func TestGetClapsWithBody(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create mock database in test %s : %v", t.Name(), err)
 	}
-	test_setup.ServerConfig.DB.Connection = mockDB
+	test_setup.App.DBConfig.Connection = mockDB
 	body := strings.NewReader(`{"page": "/blog/post"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/count_like", body)
-	ctx := context.WithValue(req.Context(), server.ServerConfigContext, &test_setup.ServerConfig)
+	ctx := context.WithValue(req.Context(), server.AppContext, *test_setup.App)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Referer", "https://example.com/")
@@ -205,13 +204,13 @@ func TestGetClapsWithBody(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	w := httptest.NewRecorder()
-	handlers.GetClaps(w, req)
+	server.GetClaps(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", w.Code)
 	}
 
-	var response handlers.ClapCounter
+	var response server.ClapCounter
 	err = json.NewDecoder(w.Body).Decode(&response)
 	if err != nil {
 		t.Fatalf("failed to decode response: %v", err)
@@ -238,10 +237,10 @@ func TestGetClapsWithBodyForAlreadyLiked(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create mock database in test %s : %v", t.Name(), err)
 	}
-	test_setup.ServerConfig.DB.Connection = mockDB
+	test_setup.App.DBConfig.Connection = mockDB
 	body := strings.NewReader(`{"page": "/blog/post"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/count_like", body)
-	ctx := context.WithValue(req.Context(), server.ServerConfigContext, &test_setup.ServerConfig)
+	ctx := context.WithValue(req.Context(), server.AppContext, *test_setup.App)
 	req = req.WithContext(ctx)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Referer", "https://example.com/")
@@ -315,13 +314,13 @@ func TestGetClapsWithBodyForAlreadyLiked(t *testing.T) {
 	).WithArgs("192.0.2.1:1234", "example.com", "/blog/post").WillReturnRows(likedipMockRows)
 
 	w := httptest.NewRecorder()
-	handlers.GetClaps(w, req)
+	server.GetClaps(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", w.Code)
 	}
 
-	var response handlers.ClapCounter
+	var response server.ClapCounter
 	err = json.NewDecoder(w.Body).Decode(&response)
 	if err != nil {
 		t.Fatalf("failed to decode response: %v", err)

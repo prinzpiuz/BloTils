@@ -1,85 +1,84 @@
 package app
 
 import (
+	"BloTils/src/db"
+	"BloTils/src/models"
 	"BloTils/src/server"
-	"BloTils/src/server/handlers"
-	"BloTils/src/server/routes"
-	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	fp "path/filepath"
+
+	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
-type App struct {
-	Server server.Server
-	Config Config
-}
+func InitApp(config *koanf.Koanf) *models.App {
 
-type Config struct {
-	ServerConfig  server.ServerConfig
-	Name          string
-	Version       string
-	Env           string
-	BaseDirectory string
-}
-
-func (app *App) Start() {
-	logo(app.Config)
-	app.Server.Start()
-}
-
-func (app *App) CreateAdmin() {
-	logo(app.Config)
-	handlers.CreateAdmin(app.Server.Config.DB.Connection)
-}
-
-func LoadConfig(filepath string) Config {
-	config, err := loadConfigFromFile(filepath)
+	err := config.Load(file.Provider("config.json"), json.Parser())
 	if err != nil {
-		fmt.Println(err)
-		return Config{}
+		log.Fatalf("error loading config: %v", err)
 	}
+	app := &models.App{
+		AppConfig: models.AppConfig{
+			Name:          config.String("AppConfig.Name"),
+			Version:       config.String("AppConfig.Version"),
+			Env:           config.String("AppConfig.Env"),
+			BaseDirectory: getBaseDir(),
+		},
+		ServerConfig: models.ServerConfig{
+			Host:        config.String("ServerConfig.Host"),
+			Port:        config.Int("ServerConfig.Port"),
+			StaticFiles: config.String("ServerConfig.StaticFiles"),
+		},
+		DBConfig: models.DBConfig{
+			DBLocation:      config.String("DBConfig.DBLocation"),
+			Vacuum:          config.String("DBConfig.Vacuum"),
+			ForeignKeys:     config.Bool("DBConfig.ForeignKeys"),
+			DBBaseDirectory: getDBBaseDir(),
+		},
+		EmailSettings: models.EmailSettings{
+			FromMail:       config.String("EmailSettings.FromMail"),
+			SendgridApiKey: config.String("EmailSettings.SendgridApiKey"),
+		},
+	}
+	return app
+}
+
+func getBaseDir() string {
 	baseDir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
-	config.BaseDirectory = baseDir
-	config.ServerConfig.BaseDirectory = baseDir
-	config.ServerConfig.DB.DBBaseDirectory = fp.Join(baseDir, "src/db")
-	config.ServerConfig.IsProduction = config.Env == "production"
-	return config
+	return baseDir
 }
 
-var ErrLoadingConfig = fmt.Errorf("error loading config from file")
+func getDBBaseDir() string {
+	baseDir := getBaseDir()
 
-func loadConfigFromFile(fpath string) (Config, error) {
-	fp := fp.Clean(fpath)
-	jsonFile, err := os.Open(fp)
-	if err != nil {
-		return Config{}, fmt.Errorf("%w: %v", ErrLoadingConfig, err)
-	}
-	defer func() {
-		if err := jsonFile.Close(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-
-	var config Config
-	jsonParser := json.NewDecoder(jsonFile)
-	err = jsonParser.Decode(&config)
-	if err != nil {
-		return Config{}, fmt.Errorf("%w: %v", ErrLoadingConfig, err)
-	}
-	return config, nil
+	return fp.Join(baseDir, "src/db")
 }
 
-func New(config Config) *App {
-	server := server.New(config.ServerConfig)
-	app := &App{
-		Server: *server,
-		Config: config,
+func Start(app models.App) {
+	Logo(app)
+	err := db.InitDB(&app.DBConfig)
+	if err != nil {
+		log.Fatalf("Error Initializing DB: %v", err)
 	}
-	routes.RegisterRoutes(server)
-	routes.ServeStaticFiles(server)
-	return app
+	serverConfig := server.InitServer(&app.ServerConfig)
+	server.SetupMiddlewares(serverConfig.Router, app)
+	server.RegisterRoutes(serverConfig)
+	server.ServeStaticFiles(serverConfig)
+	server.Start(serverConfig)
+}
+
+func Logo(a models.App) {
+	fmt.Print(logoStyle.Render(appLogo))
+	fmt.Println()
+	fmt.Print("Utilities For Your Static Blog\n")
+	fmt.Print(getversion(a.AppConfig))
+	fmt.Print(getPort(a.ServerConfig))
+	fmt.Println()
+	fmt.Println()
 }

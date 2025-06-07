@@ -1,135 +1,156 @@
 // Package routes provides the HTTP routes for the server.
-package routes
+package server
 
 import (
-	"BloTils/src/server"
-	localHandlers "BloTils/src/server/handlers"
+	"BloTils/src/models"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	tollbooth "github.com/didip/tollbooth/v8"
 	"github.com/didip/tollbooth/v8/limiter"
+	"github.com/gorilla/handlers"
 )
+
+// SetRoute configures and registers a route with the server's router, handling route protection and logging.
+// It supports setting routes as login-required (with dynamic or static paths), admin-only routes,
+// and applies combined logging to the route handler. The route is registered with specified HTTP methods.
+func setRoute(server *models.Server, routeDetails RouteDetails) {
+	if routeDetails.LoginRequired {
+		if routeDetails.DynamicRoute {
+			firstPart := strings.Split(routeDetails.Path, "/")[1]
+			DynamicRoutes = append(DynamicRoutes, firstPart)
+		} else {
+			ProtectedRoutes = append(ProtectedRoutes, routeDetails.Path)
+		}
+	}
+	if routeDetails.AdminRequired {
+		AdminOnly = append(AdminOnly, routeDetails.Path)
+	}
+
+	server.Router.Handle(routeDetails.Path, handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(routeDetails.Handler))).Methods(routeDetails.Methods...)
+}
 
 // RegisterRoutes registers the API routes for the server.
 // It calls setRoutes to add each route, specifying the path, handler function,
 // and HTTP methods allowed.
-func RegisterRoutes(s *server.Server) {
+func RegisterRoutes(s *models.Server) {
 	lmt := init_rate_limiter()
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/",
-		Handler:       localHandlers.IndexPage,
+		Handler:       IndexPage,
 		Methods:       []string{http.MethodGet},
 		AdminRequired: false,
 		LoginRequired: false,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/clap_counter",
-		Handler:       localHandlers.ClapCounterPage,
+		Handler:       ClapCounterPage,
 		Methods:       []string{http.MethodGet},
 		AdminRequired: false,
 		LoginRequired: false,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/create_account",
-		Handler:       localHandlers.CreateAccountPage,
+		Handler:       CreateAccountPage,
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: false,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/forgot_password",
-		Handler:       localHandlers.ForgotPassword,
+		Handler:       ForgotPassword,
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: false,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/reset_password/{token}",
-		Handler:       localHandlers.ResetPassword,
+		Handler:       ResetPassword,
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: false,
 		DynamicRoute:  true,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/login",
-		Handler:       localHandlers.Login,
+		Handler:       Login,
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: false,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/logout",
-		Handler:       localHandlers.Logout,
+		Handler:       Logout,
 		Methods:       []string{http.MethodGet},
 		AdminRequired: false,
 		LoginRequired: true,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/admin",
-		Handler:       localHandlers.AdminPage,
+		Handler:       AdminPage,
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: true,
 		LoginRequired: true,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/approve_account/{user_id}",
-		Handler:       localHandlers.ApproveUserRequest,
+		Handler:       ApproveUserRequest,
 		Methods:       []string{http.MethodGet},
 		AdminRequired: true,
 		LoginRequired: true,
 		DynamicRoute:  true,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/delete_user/{user_id}",
-		Handler:       localHandlers.DeleteUser,
+		Handler:       DeleteUser,
 		Methods:       []string{http.MethodGet},
 		AdminRequired: true,
 		LoginRequired: true,
 		DynamicRoute:  true,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/domains",
-		Handler:       localHandlers.GetUserDomains,
+		Handler:       GetUserDomains,
 		Methods:       []string{http.MethodGet},
 		AdminRequired: false,
 		LoginRequired: true,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/add_domain",
-		Handler:       localHandlers.AddDomain,
+		Handler:       AddDomain,
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: true,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/domain/{domain_id}",
-		Handler:       localHandlers.EditDomainSettings,
+		Handler:       EditDomainSettings,
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: true,
 		DynamicRoute:  true,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/delete_domain/{domain_id}",
-		Handler:       localHandlers.DeleteDomain,
+		Handler:       DeleteDomain,
 		Methods:       []string{http.MethodGet},
 		AdminRequired: false,
 		LoginRequired: true,
 		DynamicRoute:  true,
 	})
 	// API routes
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/api/v1/ping",
-		Handler:       localHandlers.Ping,
+		Handler:       Ping,
 		Methods:       []string{http.MethodGet},
 		AdminRequired: false,
 		LoginRequired: false,
 	})
-	s.SetRoute(server.RouteDetails{
+	setRoute(s, RouteDetails{
 		Path:          "/api/v1/count_like",
-		Handler:       tollbooth.LimitFuncHandler(lmt, localHandlers.GetClaps).ServeHTTP,
+		Handler:       tollbooth.LimitFuncHandler(lmt, GetClaps).ServeHTTP,
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: false,
@@ -153,6 +174,6 @@ func init_rate_limiter() *limiter.Limiter {
 // ServeStaticFiles registers a file server handler on the provided server to serve
 // static files from the configured static files directory. The path prefix "/static/"
 // is used to match requests for static files.
-func ServeStaticFiles(server *server.Server) {
+func ServeStaticFiles(server *models.Server) {
 	server.Router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(server.Config.StaticFiles))))
 }
