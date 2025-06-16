@@ -52,7 +52,7 @@ func InitDB(db *models.DBConfig) error {
 		closeDB(new_db)
 		return err
 	}
-	migrationFiles := filepath.Join(db.DBBaseDirectory, "migrations")
+	migrationFiles := filepath.Join(db.MigrationFiles)
 	err = runMigrations(new_db, migrationFiles)
 	if err != nil {
 		log.Println("Error Running Migrations")
