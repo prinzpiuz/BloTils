@@ -30,8 +30,8 @@ jobs:
           context: ./docker
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/blotils:latest
+            ghcr.io/blotils:${{ github.sha }}
             ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && format('ghcr.io/{0}:{1}', github.repository, github.ref_name) || '' }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
