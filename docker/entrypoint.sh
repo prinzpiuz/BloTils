@@ -4,27 +4,22 @@
 # It ensures that the BloTils.db file in the mounted volume has the correct
 # ownership and permissions for the 'blotils' user (UID 1001).
 
-DB_PATH="/blotils/BloTils.db"
+BLOTILS_DIR="/blotils"
 BLOTILS_UID=1001
 BLOTILS_GID=1001 # Assuming group 'blotils' has GID 1001
 
-echo "Ensuring BloTils.db permissions for UID ${BLOTILS_UID}..."
+echo "Ensuring permissions for UID ${BLOTILS_UID} on ${BLOTILS_DIR}..."
 
 # Check if the database file exists (e.g., if it's already mounted).
 # If it exists, ensure its ownership is correct.
-if [ -f "$DB_PATH" ]; then
-    echo "Database file $DB_PATH found. Setting ownership..."
-    chown "${BLOTILS_UID}:${BLOTILS_GID}" "$DB_PATH"
-    chmod 660 "$DB_PATH" # Or 640 depending on your exact needs (user/group r/w, others no access)
-elif [ ! -f "$DB_PATH" ] && [ -d "/blotils" ]; then
-    # If the file doesn't exist but the directory does, it might be a new volume.
-    # Ensure the parent directory has correct permissions so the app can create the file.
-    echo "Database file $DB_PATH not found. Ensuring parent directory permissions..."
-    chown "${BLOTILS_UID}:${BLOTILS_GID}" "/blotils"
-    chmod 770 "/blotils" # Allow blotils user/group to create files in /blotils
+if [ -d "$BLOTILS_DIR" ]; then
+    echo "Blotils directory $BLOTILS_DIR found. Setting ownership..."
+    chown -R "${BLOTILS_UID}:${BLOTILS_GID}" "$BLOTILS_DIR"
+    chmod 770 "/blotils"
+    # chmod 660 "$DB_PATH" # Or 640 depending on your exact needs (user/group r/w, others no access)
 fi
 
 echo "Permissions adjusted. Starting application..."
 
 # Execute the original CMD as the 'blotils' user
-exec "$@"
+exec su-exec blotils "$@"

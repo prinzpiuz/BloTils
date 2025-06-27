@@ -16,13 +16,11 @@ RUN CGO_ENABLED=1 go build -ldflags "-s -w" -o /blotils/BloTils .
 
 FROM alpine:latest
 
-RUN apk add --no-cache sqlite && \
+RUN apk add --no-cache sqlite su-exec && \
     addgroup -g 1001 -S blotils && \
     adduser -u 1001 -S blotils -G blotils
 
 WORKDIR /blotils
-
-RUN chown -R blotils:blotils /blotils
 
 ARG BT_SENDGRIDAPIKEY
 ARG BT_ENV
@@ -44,6 +42,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8000/ping || exit 1
 
-USER blotils
+USER root
 ENTRYPOINT ["/blotils/entrypoint.sh"]
 CMD ["/blotils/BloTils"]
