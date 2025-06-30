@@ -2,28 +2,29 @@ version: "3.9"
 
 services:
   blotils:
-    build: .
+    image: ghcr.io/prinzpiuz/blotils:latest
+    container_name: blotils
     ports:
-      - "8000:8000" # Still useful for debugging, but not the primary entry point
+      - 8000:8000
     volumes:
-      - ./BloTils.db:/blotils/BloTils.db # Persist SQLite database
-      - ./config.json:/blotils/config.json # Mount config files
+      - ./BloTils.db:/blotils/BloTils.db
+      - ./config.json:/blotils/config.json
     environment:
       BT_SENDGRIDAPIKEY: ${BT_SENDGRIDAPIKEY}
       BT_ENV: ${BT_ENV}
-    # No depends_on caddy needed if caddy depends on go-app
 
   caddy:
-    image: caddy:latest # Use the official Caddy image
+    image: caddy:latest
+    container_name: caddy
     ports:
-      - "80:80" # HTTP for automatic HTTPS challenge or direct HTTP
-      - "443:443" # HTTPS
+      - 80:80
+      - 443:443
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro # Mount your Caddyfile
-      - caddy_data:/data # Caddy needs a volume for its automatic HTTPS data (certificates, etc.)
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
     depends_on:
-      - go-app # Caddy should start after the Go application
+      - blotils
 
 volumes:
-  go_app_data:
-  caddy_data: # Define the named volume for Caddy's data
+  blotils_data:
+  caddy_data:
