@@ -255,6 +255,7 @@ type TemplateData struct {
 	Messages  []string
 	Errors    []string
 	Session   *db.Session
+	AppConfig models.AppConfig
 	Data      map[string]any
 }
 
@@ -275,6 +276,7 @@ func setCommonTemplateData(r *http.Request, w http.ResponseWriter) TemplateData 
 	}
 	data.CSRFToken = generateCSRFToken(r, w)
 	data.Session = GetSessionData(r)
+	data.AppConfig = appData.AppConfig
 	return data
 }
 

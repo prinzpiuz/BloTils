@@ -8,6 +8,7 @@ type DBConfig struct {
 	ForeignKeys     bool
 	Connection      *sql.DB
 	DBBaseDirectory string
+	MigrationFiles  string
 }
 
 func (dbConfig DBConfig) IsEmpty() bool {
