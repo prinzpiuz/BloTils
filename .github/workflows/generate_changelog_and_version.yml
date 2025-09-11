@@ -35,7 +35,7 @@ jobs:
         id: git-cliff
         with:
           config: cliff.toml
-          args: --latest -t ${{ needs.tag.outputs.new_tag }}
+          args: --sort newest --tag ${{ needs.tag.outputs.new_tag }}
         env:
           OUTPUT: CHANGES.md
       - name: Copy changelog to workspace
