@@ -25,6 +25,7 @@ node_modules/
 package-lock.json
 package.json
 yarn.lock
+.husky/*
 # debug files
 __debug_*
 

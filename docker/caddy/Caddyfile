@@ -1,0 +1,8 @@
+blotils.prinzpiuz.in {
+    reverse_proxy blotils:8000
+    log {
+        output file /data/access.log
+    }
+    tls prinzpiuz@gmail.com
+    encode gzip
+}
