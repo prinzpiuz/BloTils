@@ -50,6 +50,10 @@ func InitApp(config *koanf.Koanf) *models.App {
 	if env == "" {
 		env = config.String("AppConfig.Env")
 	}
+	DBLOCATION := config.String("DBLOCATION")
+	if DBLOCATION == "" {
+		DBLOCATION = config.String("DBConfig.DBLocation")
+	}
 
 	app := &models.App{
 		AppConfig: models.AppConfig{
@@ -64,7 +68,7 @@ func InitApp(config *koanf.Koanf) *models.App {
 			StaticFiles: config.String("ServerConfig.StaticFiles"),
 		},
 		DBConfig: models.DBConfig{
-			DBLocation:      config.String("DBConfig.DBLocation"),
+			DBLocation:      DBLOCATION,
 			Vacuum:          config.String("DBConfig.Vacuum"),
 			ForeignKeys:     config.Bool("DBConfig.ForeignKeys"),
 			DBBaseDirectory: getDBBaseDir(),

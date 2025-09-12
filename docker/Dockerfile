@@ -40,7 +40,7 @@ RUN chmod +x /blotils/entrypoint.sh
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8000/ping || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8000/api/v1/ping || exit 1
 
 USER root
 ENTRYPOINT ["/blotils/entrypoint.sh"]

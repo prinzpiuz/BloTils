@@ -16,7 +16,7 @@
     "ForeignKeys": true
   },
   "EmailConfig": {
-    "FromMail": "noreply@blotils.com",
+    "FromMail": "noreply@blotils.prinzpiuz.in",
     "SendgridApiKey": ""
   }
 }

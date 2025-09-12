@@ -1,7 +1,5 @@
 # BloTils
 
-Bl
-
 ### Usage
 
 #### Container Parameters
