@@ -1,0 +1,8 @@
+[files]
+extend-exclude = ["node_modules", ".git",".github"]
+ignore-hidden = true
+ignore-files = true
+ignore-dot = true
+ignore-vcs = true
+ignore-global = true
+ignore-parent = true

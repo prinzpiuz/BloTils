@@ -1,0 +1,9 @@
+{{if .Errors }}
+<div class="error" id="all_errors">
+  <ul>
+    {{range .Errors }}
+    <li>{{ . }}</li>
+    {{end}}
+  </ul>
+</div>
+{{ end }}

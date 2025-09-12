@@ -1,0 +1,51 @@
+services:
+  blotils:
+    image: ghcr.io/prinzpiuz/blotils:latest
+    container_name: blotils
+    networks:
+      - backend
+    volumes:
+      - ../BloTils.db:/blotils/BloTils.db
+      - ../config.json:/blotils/config.json
+    ports:
+      - 8000:8000
+    environment:
+      BT_SENDGRIDAPIKEY: ${BT_SENDGRIDAPIKEY}
+      BT_ENV: ${BT_ENV}
+      BT_DBLOCATION: /blotils/BloTils.db
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  caddy:
+    image: caddy:2.7.4
+    container_name: caddy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - backend
+    depends_on:
+      blotils:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      - CADDY_DOMAIN=blotils.prinzpiuz.in
+      - CADDY_EMAIL=prinzpiuz@gmail.com
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  backend:
+    driver: bridge

@@ -19,3 +19,23 @@
 
 # Go workspace file
 go.work
+.vscode/
+
+node_modules/
+package-lock.json
+package.json
+yarn.lock
+.husky/*
+# debug files
+__debug_*
+
+# DB files
+BloTils.db
+*.db
+*.session.sql
+
+core
+
+.env
+
+BloTils.db-journal

@@ -1,0 +1,61 @@
+name: Release & Deploy
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image to GHCR"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Get version from config.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r '.AppConfig.Version' config.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get changelog since last release
+        uses: orhun/git-cliff-action@main
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: --latest
+        env:
+          OUTPUT: CHANGES.md
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: ${{ steps.git-cliff.outputs.content }}
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: BloTils-v${{ steps.get_version.outputs.version }}
+
+      - name: Deploy to Hetzner via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            cd /home/prinzpiuz/BloTils
+            git checkout release
+            git pull origin release
+
+            docker compose -f docker/docker-compose.yml pull
+
+
+            # Recreate services with latest images and config
+            docker compose -f docker/docker-compose.yml up -d --remove-orphans
+
+            docker image prune -f
+
+            docker compose -f docker/docker-compose.yml ps

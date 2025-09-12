@@ -1,0 +1,30 @@
+version: "2"
+run:
+  modules-download-mode: readonly
+linters:
+  enable:
+    - goconst
+    - gocritic
+    - gocyclo
+    - gosec
+    - misspell
+    - prealloc
+    - unparam
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
