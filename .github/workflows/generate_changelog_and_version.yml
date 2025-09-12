@@ -20,7 +20,7 @@ jobs:
           branch: staging
           skipInvalidTags: true
     outputs:
-      new_tag: ${{ steps.autoversion.outputs.new_tag }}
+      new_tag: ${{ steps.autoversion.outputs.nextStrict }}
   commit_changelog_and_version:
     needs: tag
     runs-on: ubuntu-latest
