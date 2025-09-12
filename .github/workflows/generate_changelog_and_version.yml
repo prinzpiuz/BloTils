@@ -19,6 +19,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: staging
           skipInvalidTags: true
+          noVersionBumpBehavior: patch
     outputs:
       new_tag: ${{ steps.autoversion.outputs.nextStrict }}
   commit_changelog_and_version:

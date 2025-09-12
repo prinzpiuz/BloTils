@@ -25,7 +25,7 @@ jobs:
         id: git-cliff
         with:
           config: cliff.toml
-          args: --latest
+          args: --current
         env:
           OUTPUT: CHANGES.md
 
@@ -37,7 +37,7 @@ jobs:
           tag_name: ${{ steps.get_version.outputs.version }}
           name: BloTils-v${{ steps.get_version.outputs.version }}
 
-      - name: Deploy to Hetzner via SSH
+      - name: Deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -46,15 +46,17 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
+
+            export BT_MAILGUNPASSWORD='${{ secrets.BT_MAILGUNPASSWORD }}'
+            export BT_ENV=production
+
             cd /home/prinzpiuz/BloTils
+            git fetch origin
             git checkout release
             git pull origin release
 
-            docker compose -f docker/docker-compose.yml pull
-
-
-            # Recreate services with latest images and config
-            docker compose -f docker/docker-compose.yml up -d --remove-orphans
+            BT_MAILGUNPASSWORD=$BT_MAILGUNPASSWORD BT_ENV=$BT_ENV docker compose -f docker/docker-compose.yml pull
+            BT_MAILGUNPASSWORD=$BT_MAILGUNPASSWORD BT_ENV=$BT_ENV docker compose -f docker/docker-compose.yml up -d --remove-orphans
 
             docker image prune -f
 
