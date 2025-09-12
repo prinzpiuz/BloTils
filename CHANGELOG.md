@@ -5,6 +5,8 @@
 
 ## What's Changed in 0.10.1
 * chore: changelog generated & version updated automatically by @github-actions[bot]
+
+## What's Changed in 0.10.1
 * fix: 🐛 bug in generate changelog by @prinzpiuz in [#38](https://github.com/prinzpiuz/BloTils/pull/38)
 * fix: 🐛 bugs related to automated release by @prinzpiuz in [#37](https://github.com/prinzpiuz/BloTils/pull/37)
 * ci: 🎡 automated deploy implemented by @prinzpiuz in [#36](https://github.com/prinzpiuz/BloTils/pull/36)
