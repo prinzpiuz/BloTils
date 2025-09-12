@@ -1,9 +1,10 @@
 name: Release & Deploy
 
 on:
-  push:
-    branches:
-      - release
+  workflow_run:
+    workflows: ["Build and Push Docker Image to GHCR"]
+    types:
+      - completed
 
 jobs:
   deploy:
@@ -46,13 +47,15 @@ jobs:
           script: |
             set -e
             cd /home/prinzpiuz/BloTils
+            git checkout release
             git pull origin release
 
-            docker-compose pull
+            docker compose -f docker/docker-compose.yml pull
+
 
             # Recreate services with latest images and config
-            docker-compose up -d --remove-orphans
+            docker compose -f docker/docker-compose.yml up -d --remove-orphans
 
             docker image prune -f
 
-            docker-compose ps
+            docker compose -f docker/docker-compose.yml ps
