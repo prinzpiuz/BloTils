@@ -5,8 +5,8 @@ services:
     networks:
       - backend
     volumes:
-      - ../BloTils.db:/blotils/BloTils.db
-      - ../config.json:/blotils/config.json
+      - ../../BloTils_Data/BloTils.db:/blotils/BloTils.db
+      - ../../BloTils_Data/config.json:/blotils/config.json
     environment:
       BT_SENDGRIDAPIKEY: ${BT_SENDGRIDAPIKEY}
       BT_ENV: production

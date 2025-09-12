@@ -25,7 +25,7 @@ jobs:
         id: git-cliff
         with:
           config: cliff.toml
-          args: --current
+          args: --sort newest --latest
         env:
           OUTPUT: CHANGES.md
 
