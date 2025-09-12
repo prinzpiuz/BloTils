@@ -1,4 +1,11 @@
+## What's Changed in 0.10.3
+* chore: 🤖 config errors fixed in release automation by @prinzpiuz in [#42](https://github.com/prinzpiuz/BloTils/pull/42)
+* chore: 🤖 config errors fixed in release automation by @prinzpiuz
+
+**Full Changelog**: https://github.com/prinzpiuz/BloTils/compare/0.10.2...0.10.3
+
 ## What's Changed in 0.10.2
+* chore: changelog generated & version updated automatically by @github-actions[bot]
 * Merge branch 'release' into staging by @prinzpiuz
 * Release v0.10.1 by @prinzpiuz in [#39](https://github.com/prinzpiuz/BloTils/pull/39)
 * chore: changelog generated & version updated automatically by @github-actions[bot]
