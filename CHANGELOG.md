@@ -1,4 +1,5 @@
 ## What's Changed in 0.10.3
+* chore: changelog generated & version updated automatically by @github-actions[bot]
 * chore: 🤖 config errors fixed in release automation by @prinzpiuz in [#42](https://github.com/prinzpiuz/BloTils/pull/42)
 * chore: 🤖 config errors fixed in release automation by @prinzpiuz
 
