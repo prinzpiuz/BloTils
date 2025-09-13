@@ -1,5 +1,6 @@
 ## What's Changed in 0.10.4
 * chore: changelog generated & version updated automatically by @github-actions[bot]
+* chore: changelog generated & version updated automatically by @github-actions[bot]
 
 **Full Changelog**: https://github.com/prinzpiuz/BloTils/compare/0.10.3...0.10.4
 
