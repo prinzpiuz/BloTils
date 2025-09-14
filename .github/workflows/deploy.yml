@@ -19,6 +19,5 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            |
             chmod +x /home/prinzpiuz/BloTils/scripts/deploy.sh
             ./home/prinzpiuz/BloTils/scripts/deploy.sh '${{ secrets.BT_MAILGUNPASSWORD }}' 'production'

@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://github.com/prinzpiuz/BloTils/blob/staging/static/favicon/android-chrome-512x512.png?raw=true" alt="BloTils Logo" width="200"/><br/>
-  <b>Blog-Utils, Common utilities for your blogging platform.</b>
+  <b>Blo</b>g-u<b>Tils</b>, <b>Common utilities for your blogging platform.</b>
 </p>
 
 ## BloTils
