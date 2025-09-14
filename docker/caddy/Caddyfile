@@ -13,6 +13,6 @@ blotils.prinzpiuz.in {
 
         # Controls which external resources the browser is allowed to load.
         # This is a good starting point, but you should customize it.
-        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:"
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
     }
 }
