@@ -1,4 +1,7 @@
 ## What's Changed in 0.10.4
+* fix: 🐛 bugs fixes & refined release process by @prinzpiuz in [#44](https://github.com/prinzpiuz/BloTils/pull/44)
+* fix: 🐛 bugs fixes & refined release process by @prinzpiuz
+* chore: changelog generated & version updated automatically by @github-actions[bot]
 * chore: changelog generated & version updated automatically by @github-actions[bot]
 * chore: changelog generated & version updated automatically by @github-actions[bot]
 
