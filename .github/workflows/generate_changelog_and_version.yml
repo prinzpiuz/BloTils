@@ -63,7 +63,7 @@ jobs:
         id: current_changelog
         with:
           config: cliff.toml
-          args: --sort newest --current
+          args: --sort newest --tag ${{ needs.tag.outputs.new_tag }}
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

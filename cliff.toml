@@ -11,8 +11,7 @@ body = """
   {%- else -%}
     {%- set commit_message = commit.message -%}
   {%- endif -%}
-
-  * {{ commit.id }}:{{ commit_message | split(pat="\n") | first | trim }}\
+  * {{ commit_message | split(pat="\n") | first | trim }}\
     {% if commit.remote.username %} by @{{ commit.remote.username }}{%- endif -%}
 {%- endfor -%}
 
