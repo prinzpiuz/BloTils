@@ -11,32 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Get version from config.json
-        id: get_version
-        run: |
-          VERSION=$(jq -r '.AppConfig.Version' config.json)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Get changelog since last release
-        uses: orhun/git-cliff-action@main
-        id: git-cliff
-        with:
-          config: cliff.toml
-          args: --sort newest --latest
-        env:
-          OUTPUT: CHANGES.md
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          body: ${{ steps.git-cliff.outputs.content }}
-          tag_name: ${{ steps.get_version.outputs.version }}
-          name: BloTils-v${{ steps.get_version.outputs.version }}
-
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
@@ -45,19 +19,6 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            set -e
-
-            export BT_MAILGUNPASSWORD='${{ secrets.BT_MAILGUNPASSWORD }}'
-            export BT_ENV=production
-
-            cd /home/prinzpiuz/BloTils
-            git fetch origin
-            git checkout release
-            git pull origin release
-
-            BT_MAILGUNPASSWORD=$BT_MAILGUNPASSWORD BT_ENV=$BT_ENV docker compose -f docker/docker-compose.yml pull
-            BT_MAILGUNPASSWORD=$BT_MAILGUNPASSWORD BT_ENV=$BT_ENV docker compose -f docker/docker-compose.yml up -d --remove-orphans
-
-            docker image prune -f
-
-            docker compose -f docker/docker-compose.yml ps
+            |
+            chmod +x /home/prinzpiuz/BloTils/scripts/deploy.sh
+            ./home/prinzpiuz/BloTils/scripts/deploy.sh '${{ secrets.BT_MAILGUNPASSWORD }}' 'production'
