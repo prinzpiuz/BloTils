@@ -1,7 +1,13 @@
+## What's Changed in 0.10.6
+* fix: 🐛 fixed bug in deploy script by @prinzpiuz
+* fix: 🐛 fixed bug in deploy script by @prinzpiuz
+
+**Full Changelog**: https://github.com/prinzpiuz/BloTils/compare/0.10.5...0.10.6
+
 ## What's Changed in 0.10.5
-* fix: 🐛 bug in generate changelog fixed by @prinzpiuz
-* fix: 🐛 bug in generate changelog fixed by @prinzpiuz
 * chore: changelog generated & version updated automatically by @github-actions[bot]
+* fix: 🐛 bug in generate changelog fixed by @prinzpiuz
+* fix: 🐛 bug in generate changelog fixed by @prinzpiuz
 * fix: 🐛 build process updated by @prinzpiuz
 * fix: 🐛 build process updated by @prinzpiuz
 
