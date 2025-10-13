@@ -1,8 +1,6 @@
 module BloTils
 
-go 1.23.0
-
-toolchain go1.23.7
+go 1.24.0
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -14,8 +12,8 @@ require (
 	github.com/knadh/koanf/v2 v2.2.2
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/sendgrid/sendgrid-go v3.16.1+incompatible
-	golang.org/x/crypto v0.41.0
-	golang.org/x/term v0.34.0
+	golang.org/x/crypto v0.43.0
+	golang.org/x/term v0.36.0
 )
 
 require (
@@ -48,5 +46,5 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
 )
