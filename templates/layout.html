@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="/{{.Static}}/css/main.css" />
   </head>
   <body>
-    <div class="{{if .Session.IsEmpty}}container{{else}}session-container{{end}}">
+    <div id="app" class="{{if .Session.IsEmpty}}container{{else}}session-container{{end}}">
         {{ template "topbar.html" . }}
         {{ template "sidebar.html" . }}
         <main class="content">

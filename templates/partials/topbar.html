@@ -1,11 +1,13 @@
 {{if .Session.IsEmpty }}
+
 <div class="top-bar">
   <div class="auth-links">
-    {{ if not .Data.indexPage}}
-    <a href="/"><b>Home </b></a> |
+    {{ if not .Data.indexPage }}
+      <a href="/" class="nav-link">Home</a>
     {{ end }}
-    <a href="/login"><b>Sign In</b></a> |
-    <a href="/create_account"><b>Create Account</b></a>
+    <a href="/login" class="nav-link">Sign In</a>
+    <a href="/create_account" class="nav-link">Create Account</a>
   </div>
 </div>
+
 {{ end }}
