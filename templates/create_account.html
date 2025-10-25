@@ -1,29 +1,41 @@
-{{ define "content" }} {{ template "logo.html" . }}
+{{ define "content" }}
+{{ template "logo.html" . }}
 <p class="account-creation-note">
-  <b
-    >Note:This is a small intiative, So we are only accepting limited signups,
-    Before creating account contact admin personally</b
-  >
+    <strong>Note:</strong> This is a small initiative, so we are only accepting
+    limited sign-ups. Before creating an account, please contact the admin
+    personally.
 </p>
 <h3 class="form-heading">Create Account</h3>
 <form
-  class="login-form"
-  id="create_account_form"
-  action="/create_account"
-  method="POST"
-  onsubmit="return validateForm()"
+    class="login-form"
+    id="create_account_form"
+    action="/create_account"
+    method="POST"
+    onsubmit="return validateForm()"
 >
-  <input type="hidden" name="csrfToken" value="{{.CSRFToken}}" />
-  <div class="form-group">
-    <label for="email">Email</label>
-    <input type="email" id="email" name="email" required />
-    <div class="error" id="emailError"></div>
-  </div>
-  {{ template "password.html" . }}
-  <button type="submit">Create Account</button>
+    <input
+        type="hidden"
+        name="csrfToken"
+        value="{{.CSRFToken}}"
+    />
+    <div class="form-group">
+        <label for="email">Email</label>
+        <input
+            type="email"
+            id="email"
+            name="email"
+            required
+        />
+        <div
+            class="error"
+            id="emailError"
+        ></div>
+    </div>
+    {{ template "password.html" . }}
+    <button type="submit">Create Account</button>
 </form>
 <p style="text-align: center">
-  Already have an account? <a href="/login">Login</a>
+    Already have an account? <a href="/login">Login</a>
 </p>
 
 <script src="/{{.Static}}/js/create_account.js"></script>

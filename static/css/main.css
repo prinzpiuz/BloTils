@@ -244,14 +244,12 @@ body {
     margin: 0;
 }
 
-/* === Hover Interaction === */
 .feature:hover {
     transform: translateY(-6px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
     border-color: #d8c4f8;
 }
 
-/* === Responsive Tweaks === */
 @media (max-width: 768px) {
     .section-title {
         margin-bottom: 30px;
@@ -292,59 +290,117 @@ button {
     background-color: #5b19be;
 }
 
+.form-heading {
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    color: #222;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
 .login-form {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
+    box-sizing: border-box;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    align-items: center;
 }
 
 .form-group label {
-    margin-right: 10px;
-    text-align: right;
-    margin-bottom: 10px;
+    font-family: 'Inter', sans-serif;
+    color: #555;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    text-align: left;
 }
 
-.form-group input[type='password'],
 .form-group input[type='email'],
-.form-group input[type='text'] {
-    flex-grow: 1;
-    padding: 8px;
-    border: 1px solid #742ce0;
-    border-radius: 4px;
+.form-group input[type='password'] {
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #333;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input[type='email']:focus,
+.form-group input[type='password']:focus {
+    border-color: #742ce0;
+    outline: none;
 }
 
 button[type='submit'] {
-    padding: 10px 20px;
+    padding: 12px 20px;
     background-color: #742ce0;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
-    align-self: center;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease;
 }
 
 button[type='submit']:hover {
     background-color: #5b19be;
 }
 
-.form-heading {
-    font-size: 20px;
+.forgot-password {
     text-align: center;
-    margin-bottom: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.forgot-password a {
+    color: #742ce0;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.forgot-password a:hover {
+    color: #5b19be;
+}
+
+@media (max-width: 480px) {
+    .login-form {
+        padding: 20px;
+        width: 90%;
+    }
 }
 
 .account-creation-note {
-    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.3rem;
+    color: #444;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    padding: 12px 18px;
+    line-height: 1.5;
+    opacity: 0.9;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+.account-creation-note strong {
+    font-weight: bold;
+    color: #742ce0;
+}
+
+.account-creation-note:hover {
+    background-color: #f3f3f3; /* Slightly darker on hover */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+}
 .session-container {
     display: flex;
     flex-direction: row;
