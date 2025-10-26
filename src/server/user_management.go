@@ -17,10 +17,10 @@ const UserHandler = "UserHandler"
 
 // CreateAccountPage renders the HTML template for the account creation page.
 func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
-
+	templateData := setCommonTemplateData(r, w)
+	templateData.Data = map[string]interface{}{"createAccountPage": true}
 	switch r.Method {
 	case http.MethodGet:
-		templateData := setCommonTemplateData(r, w)
 		generateHTML(w, templateData, "layout", "create_account")
 	case http.MethodPost:
 		parseForm(r, w)
@@ -31,7 +31,6 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 		isEmailValidated, msg1 := userEmailValidated(db_connection, email)
 		isValidPassword, msg2 := checkeckPassword(password, confirmPassword)
 		if !isEmailValidated || !isValidPassword {
-			templateData := setCommonTemplateData(r, w)
 			templateData.Errors = []string{msg1, msg2}
 			generateHTML(w, templateData, "layout", "create_account")
 			return
@@ -192,9 +191,10 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+	templateData := setCommonTemplateData(r, w)
+	templateData.Data = map[string]interface{}{"loginPage": true}
 	switch r.Method {
 	case http.MethodGet:
-		templateData := setCommonTemplateData(r, w)
 		generateHTML(w, templateData, "layout", "login")
 	case http.MethodPost:
 		parseForm(r, w)
@@ -218,7 +218,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Print("Error: Invalid Login")
-		templateData := setCommonTemplateData(r, w)
 		msg := "Invalid Email or Password"
 		templateData.Errors = []string{msg}
 		generateHTML(w, templateData, "layout", "login")

@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const domainNameInput = document.getElementById("domainName");
 
     openModalBtn.addEventListener("click", function () {
-        modal.style.display = "block";
+         modal.style.display = 'flex';
     });
 
     closeModalBtn.addEventListener("click", function () {

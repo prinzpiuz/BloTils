@@ -1,30 +1,30 @@
 {{if not .Session.IsEmpty}}
-<aside class="sidebar">
-  <div class="user-info">
-    <p class="small-logo">BloTils</p>
-    <p>Hi, {{.Session.User.Email }}</p>
-  </div>
-  <div class="menu">
-    <ul>
-      <div class="menu-item">
-        <li><a href="/admin">Users</a></li>
-      </div>
-      <div class="menu-item">
-        <li><a href="/domains">Sites</a></li>
-      </div>
-      <div class="menu-item">
-        <li><a href="#">Analytics</a></li>
-      </div>
-      <div class="menu-item">
-        <li><a href="#">Settings</a></li>
-      </div>
-      <div class="menu-item">
-        <li><a href="/logout">Logout</a></li>
-      </div>
-    </ul>
-  </div>
-  <div class="app-version">
-    <p>Version: {{.AppConfig.Version}}</p>
-  </div>
+<aside  id="sidebar"class="sidebar">
+    <div class="user-info">
+        <p class="small-logo">BloTils</p>
+        <p>Hi, {{.Session.User.Email}}</p>
+    </div>
+    <div class="menu">
+        <ul class="no-bullets">
+            <div class="menu-item">
+                <li><a href="/admin">Users</a></li>
+            </div>
+            <div class="menu-item">
+                <li><a href="/domains">Domains</a></li>
+            </div>
+            <div class="menu-item">
+                <li><a href="#">Analytics</a></li>
+            </div>
+            <div class="menu-item">
+                <li><a href="#">Settings</a></li>
+            </div>
+            <div class="menu-item">
+                <li><a href="/logout">Logout</a></li>
+            </div>
+        </ul>
+    </div>
+    <div class="app-version">
+        <p>Version: {{.AppConfig.Version}}</p>
+    </div>
 </aside>
 {{ end }}
