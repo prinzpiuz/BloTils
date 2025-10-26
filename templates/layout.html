@@ -52,14 +52,16 @@
             {{ template "topbar.html" . }}
             {{ template "header.html" . }}
             {{ template "sidebar.html" . }}
-            <main class="content">
+            <main class="{{if not .Session.IsEmpty}}content{{end}}">
                 {{ template "message_layout.html" . }}
                 {{ template "content" .}}
                 {{ template "error_layout.html" . }}
             </main>
         </div>
         {{ template "footer.html" . }}
+    {{if not .Session.IsEmpty}}
     <script src="/{{.Static}}/js/toggle_sidebar.js" async></script>
+    {{ end }}
     </body>
 </html>
 
