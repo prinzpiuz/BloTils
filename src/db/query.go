@@ -45,9 +45,13 @@ const getAllUserDomains = `SELECT
 						 d.id,
 						 d.settings_id,
 						 d.domain,
-						 d.created_time
+						 d.created_time,
+						 ds.likes,
+						 ds.comments,
+						 ds.created_time
 					   FROM
 					     Domain d
+					   JOIN DomainSettings ds ON d.id = ds.id
 					   WHERE
 					     d.user_id = ?
 					   ORDER BY

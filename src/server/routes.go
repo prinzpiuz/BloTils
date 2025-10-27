@@ -125,7 +125,7 @@ func RegisterRoutes(s *models.Server) {
 		LoginRequired: true,
 	})
 	setRoute(s, RouteDetails{
-		Path:          "/domain/{domain_id}",
+		Path:          "/edit_domain/{domain_id}",
 		Handler:       EditDomainSettings,
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,

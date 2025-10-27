@@ -2,7 +2,6 @@ package server
 
 import (
 	"BloTils/src/db"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -42,14 +41,6 @@ func AddDomain(w http.ResponseWriter, r *http.Request) {
 
 func EditDomainSettings(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case http.MethodGet:
-		db_connection := GetDbConnection(r)
-		domainId, err := strconv.Atoi(getUrlVars(r, "domain_id"))
-		commonIntParsingError(w, r, err)
-		domain := db.GetDomainById(db_connection, domainId)
-		templateData := setCommonTemplateData(r, w)
-		templateData.Data = map[string]any{"domain": domain, "edit_page": true}
-		generateHTML(w, templateData, "layout", "edit_domain_details")
 	case http.MethodPost:
 		db_connection := GetDbConnection(r)
 		domainId, err := strconv.Atoi(getUrlVars(r, "domain_id"))
@@ -67,8 +58,7 @@ func EditDomainSettings(w http.ResponseWriter, r *http.Request) {
 			domain := db.DomainFactory(sessionData.User, domainName, enableLike, enableComment, domainId)
 			db.UpdateDomainDetails(db_connection, domain)
 		}
-		redirectUrl := fmt.Sprintf("/domain/%v", domainId)
-		http.Redirect(w, r, redirectUrl, http.StatusSeeOther)
+		http.Redirect(w, r, "/domains", http.StatusSeeOther)
 	}
 }
 
