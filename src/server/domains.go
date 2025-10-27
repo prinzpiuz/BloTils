@@ -40,8 +40,11 @@ func AddDomain(w http.ResponseWriter, r *http.Request) {
 }
 
 func EditDomainSettings(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodPost:
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/domains", http.StatusSeeOther)
+		return
+	}
+	if r.Method == http.MethodPost {
 		db_connection := GetDbConnection(r)
 		domainId, err := strconv.Atoi(getUrlVars(r, "domain_id"))
 		commonIntParsingError(w, r, err)
