@@ -1,5 +1,4 @@
-{{ define "content" }}
-{{ template "add_domain_modal.html" . }}
+{{ define "content" }} {{ template "add_domain_modal.html" . }}
 <div class="user-list-container">
     <div class="list-header">
         <h2>Configured Domains</h2>
@@ -31,6 +30,16 @@
                     >
                 </td>
                 <td>
+                    <a
+                        href="#"
+                        class="domain-link edit-domain"
+                        data-id="{{.Id}}"
+                        data-domain="{{.Domain}}"
+                        data-likes="{{.LikesEnabled}}"
+                        data-comments="{{.CommentsEnabled}}"
+                    >
+                        Edit
+                    </a>
                     <a
                         href="delete_domain/{{.Id}}"
                         class="delete-link"

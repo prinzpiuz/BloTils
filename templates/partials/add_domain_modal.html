@@ -1,17 +1,13 @@
-{{ if not .Data.edit_page}}
 <div
-    id="add_domain"
+    id="domainModal"
     class="add_domain_modal"
 >
     <div class="modal-content">
         <span class="close-button">&times;</span>
-
-        <h2>{{ if not .Data.edit_page}}Add{{else}}Edit{{end}}Domain</h2>
+        <h2 id="modalTitle">Add Domain</h2>
 
         <form
-            class="add_domain"
             id="domainForm"
-            action="{{ if .Data.edit_page}}/domain/{{.Data.domain.Id}}{{else}}/add_domain{{end}}"
             method="POST"
         >
             <input
@@ -19,13 +15,11 @@
                 name="csrfToken"
                 value="{{.CSRFToken}}"
             />
-            {{ if .Data.edit_page}}
             <input
                 type="hidden"
+                id="domainId"
                 name="domainId"
-                value="{{.Data.domain.Id}}"
             />
-            {{ end }}
 
             <div class="form-group">
                 <label for="domainName">Domain Name</label>
@@ -33,57 +27,54 @@
                     type="text"
                     id="domainName"
                     name="domainName"
-                    {{
-                    if
-                    .Data.edit_page}}value="{{.Data.domain.Domain}}"
-                    {{end}}
                     required
                 />
+                <p class="error-message" id="domainError"></p>
             </div>
 
-            <div class="toggle-group">
-                <label class="toggle-label">
-                    Like Counter
-                    <input
-                        type="checkbox"
-                        id="enableLike"
-                        name="enableLike"
-                        {{
-                        if
-                        .Data.domain.LikesEnabled}}checked{{end}}
-                    />
-                    <span class="toggle-slider"></span>
-                    <span
-                        class="info-icon i"
-                        title="To count likes from users on blog posts/contents"
-                        >i</span
-                    >
-                </label>
+            <div class="toggle-container">
+                <div class="toggle-group">
+                    <label class="toggle-label">
+                        <span class="toggle-text">Like Counter</span>
+                        <input
+                            type="checkbox"
+                            id="enableLike"
+                            name="enableLike"
+                        />
+                        <span class="toggle-slider"></span>
+                        <span
+                            class="info-icon"
+                            title="Count likes from users on blog posts"
+                            >i</span
+                        >
+                    </label>
+                </div>
+
+                <div class="toggle-group">
+                    <label class="toggle-label">
+                        <span class="toggle-text">Comments</span>
+                        <input
+                            type="checkbox"
+                            id="enableComments"
+                            name="enableComments"
+                        />
+                        <span class="toggle-slider"></span>
+                        <span
+                            class="info-icon"
+                            title="Allow users to comment on blog posts"
+                            >i</span
+                        >
+                    </label>
+                </div>
             </div>
 
-            <div class="toggle-group">
-                <label class="toggle-label">
-                    Comments
-                    <input
-                        type="checkbox"
-                        id="enableComments"
-                        name="enableComments"
-                        {{
-                        if
-                        .Data.domain.CommentsEnabled}}checked{{end}}
-                    />
-                    <span class="toggle-slider"></span>
-                    <span
-                        class="info-icon i"
-                        title="Allow users to post comments on blogs in this domain"
-                        >i</span
-                    >
-                </label>
-            </div>
-
-            <button type="submit">Submit</button>
+            <button
+                class="add_domain_btn"
+                type="submit"
+                id="submitButton"
+            >
+                Add Domain
+            </button>
         </form>
     </div>
 </div>
-
-{{ end }}

@@ -81,7 +81,13 @@ func GetAllUserDomains(db *sql.DB, userID int) []Domain {
 	}
 	for rows.Next() {
 		var domain Domain
-		err := rows.Scan(&domain.Id, &domain.Settings.Id, &domain.Domain, &domain.timestamp)
+		err := rows.Scan(&domain.Id,
+			&domain.Settings.Id,
+			&domain.Domain,
+			&domain.timestamp,
+			&domain.Settings.likes,
+			&domain.Settings.comments,
+			&domain.Settings.timestamp)
 		if err != nil {
 			log.Printf("Scaning Rows Failed: %v", err)
 			return nil

@@ -277,6 +277,12 @@ body {
     background-color: #5b19be;
 }
 
+.add_domain_btn {
+    left: 55px;
+    position: relative;
+    margin-top: 22px;
+}
+
 .domain-link {
     color: #742ce0;
     text-decoration: none;
@@ -748,7 +754,6 @@ footer {
     z-index: 1000;
     background-color: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(2px);
-
     justify-content: center;
     align-items: center;
 }
@@ -764,6 +769,9 @@ footer {
     transform: translateY(-10px);
     opacity: 0;
     animation: fadeInModal 0.25s ease forwards;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
 
 @keyframes fadeInModal {
@@ -787,7 +795,7 @@ footer {
 .close-button {
     position: relative;
     bottom: 3px;
-    left: 380px;
+    left: 190px;
     font-size: 24px;
     color: #aaa;
     cursor: pointer;
@@ -941,4 +949,21 @@ button[type='submit']:hover {
         padding: 20px;
         width: 95%;
     }
+}
+
+.error-message {
+    color: #e74c3c;
+    font-size: 13px;
+    margin-top: 4px;
+    text-align: center;
+}
+
+input:invalid {
+    border-color: #e74c3c;
+}
+
+input:focus {
+    outline: none;
+    border-color: #742ce0;
+    box-shadow: 0 0 0 3px rgba(116, 44, 224, 0.15);
 }
