@@ -31,8 +31,9 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 		isEmailValidated, msg1 := userEmailValidated(db_connection, email)
 		isValidPassword, msg2 := checkeckPassword(password, confirmPassword)
 		if !isEmailValidated || !isValidPassword {
-			templateData.Errors = []string{msg1, msg2}
-			generateHTML(w, templateData, "layout", "create_account")
+			SetErrorFlash(w, r, msg1)
+			SetErrorFlash(w, r, msg2)
+			http.Redirect(w, r, "/create_account", http.StatusSeeOther)
 			return
 		}
 		passwordHash := passwordHash(password)
@@ -45,7 +46,7 @@ func CreateAccountPage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Successfully Added user request %s", email)
 		msg := `Account Creation Request Processed Successfully <br>
 								Wait for approval from admin`
-		sendMessagePage(r, w, msg)
+		SetSuccessFlash(w, r, msg)
 	}
 }
 
@@ -128,7 +129,7 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				mailer.ResetPasswordMail(email, token)
 				msg := `You'll recive your reset link in mail, if your email is verified`
-				sendMessagePage(r, w, msg)
+				SetSuccessFlash(w, r, msg)
 				return
 			}
 			log.Print("Failed To Save Reset Password Token")
@@ -171,7 +172,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 		isValidPassword, msg := checkeckPassword(password, confirmPassword)
 		if !isValidPassword {
 			templateData := setCommonTemplateData(r, w)
-			templateData.Errors = []string{msg}
+			SetErrorFlash(w, r, msg)
 			templateData.Data = map[string]interface{}{"tokenObj": tokenObj}
 			generateHTML(w, templateData, "layout", "reset_password")
 			return
@@ -185,7 +186,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		sendMessagePage(r, w, "Password Reset Successful")
+		SetSuccessFlash(w, r, "Password Reset Successful")
 		log.Printf("Password Reset Successfully for user %s", tokenObj.User.Email)
 	}
 }
@@ -210,6 +211,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			SetSuccessFlash(w, r, "Login Successfull")
 			if user.IsAdmin() {
 				http.Redirect(w, r, "/admin", http.StatusSeeOther)
 				return
@@ -219,8 +221,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Print("Error: Invalid Login")
 		msg := "Invalid Email or Password"
-		templateData.Errors = []string{msg}
-		generateHTML(w, templateData, "layout", "login")
+		SetErrorFlash(w, r, msg)
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 
 	}
@@ -239,5 +241,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	SetSuccessFlash(w, r, "Logout Successfull")
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

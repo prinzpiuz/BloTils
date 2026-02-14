@@ -9,6 +9,7 @@
             >Home</a
         >
         {{ end }}
+        {{  if not .Data.samplePage }}
         {{ if not .Data.loginPage }}
         <a
             href="/login"
@@ -22,6 +23,7 @@
             class="nav-link"
             >Create Account</a
         >
+        {{ end }}
         {{ end }}
     </div>
 </div>

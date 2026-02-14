@@ -29,22 +29,38 @@
                         >{{ .Domain }}</a
                     >
                 </td>
-                <td>
+                <td class="actions-cell">
                     <a
                         href="#"
-                        class="domain-link edit-domain"
+                        class="action-icon edit-icon edit-domain"
                         data-id="{{.Id}}"
                         data-domain="{{.Domain}}"
                         data-likes="{{.LikesEnabled}}"
                         data-comments="{{.CommentsEnabled}}"
+                        title="Edit"
+                        aria-label="Edit domain"
                     >
-                        Edit
+                        <img
+                            src="/{{$.Static}}/icons/edit.svg"
+                            alt="Edit"
+                        />
                     </a>
                     <a
                         href="delete_domain/{{.Id}}"
-                        class="delete-link"
-                        >Delete</a
+                        class="action-icon delete-icon"
+                        title="Delete"
+                        aria-label="Delete domain"
+                        onclick="
+                            return confirm(
+                                'Are you sure you want to delete this domain?',
+                            );
+                        "
                     >
+                        <img
+                            src="/{{$.Static}}/icons/delete.svg"
+                            alt="Delete"
+                        />
+                    </a>
                 </td>
             </tr>
             {{ end }}

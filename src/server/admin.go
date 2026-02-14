@@ -25,8 +25,9 @@ func ApproveUserRequest(w http.ResponseWriter, r *http.Request) {
 		err = db.ApproveUser(db_connection, userId)
 		if err != nil {
 			log.Printf("Error Approving User %d: %v", userId, err)
-			// TODO set message
+			SetErrorFlash(w, r, "Error Approving User")
 		}
+		SetSuccessFlash(w, r, "User Request Approved")
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }
@@ -41,9 +42,10 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 			err = db.DeleteUser(db_connection, userId)
 			if err != nil {
 				log.Printf("Error Deleting User %d: %v", userId, err)
-				// TODO set message
+				SetErrorFlash(w, r, "Error Deleting User")
 			}
 		}
+		SetSuccessFlash(w, r, "User Deleted Successfully")
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }

@@ -422,3 +422,72 @@ func DeleteUser(db *sql.DB, userId int) error {
 	}
 	return nil
 }
+
+// GetLikesByDomainId retrieves all likes associated with a specific domain ID.
+// Returns a slice of Likes structs ordered by count descending.
+func GetLikesByDomainId(db *sql.DB, domainId int) []Likes {
+	var likesList []Likes
+	rows, err := db.Query(getLikesByDomainId, domainId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("DB: No likes found for domain ID %d", domainId)
+			return nil
+		}
+		log.Printf("Error Getting Likes for Domain %d: %v", domainId, err)
+		return nil
+	}
+	defer func() {
+		if err = rows.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+	for rows.Next() {
+		var like Likes
+		err := rows.Scan(&like.id, &like.URI, &like.domain_id, &like.Count)
+		if err != nil {
+			log.Printf("Scanning Likes Rows Failed: %v", err)
+			return nil
+		}
+		like.Domain.Id = domainId
+		likesList = append(likesList, like)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Likes Iteration Failed: %v", err)
+		return nil
+	}
+	return likesList
+}
+
+// GetLikesTimeline retrieves the likes timeline for a specific URI within a domain,
+// grouped by date, for rendering a likes-over-time graph.
+func GetLikesTimeline(db *sql.DB, domainId int, uri string) []LikesTimeline {
+	var timeline []LikesTimeline
+	rows, err := db.Query(getLikesTimeline, domainId, uri)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("DB: No timeline data for domain %d, uri %s", domainId, uri)
+			return nil
+		}
+		log.Printf("Error Getting Likes Timeline: %v", err)
+		return nil
+	}
+	defer func() {
+		if err = rows.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+	for rows.Next() {
+		var entry LikesTimeline
+		err := rows.Scan(&entry.Date, &entry.Count)
+		if err != nil {
+			log.Printf("Scanning Timeline Rows Failed: %v", err)
+			return nil
+		}
+		timeline = append(timeline, entry)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Timeline Iteration Failed: %v", err)
+		return nil
+	}
+	return timeline
+}

@@ -256,3 +256,25 @@ const approveUser = `UPDATE USER
 // by matching the provided user ID. This query is used to permanently delete
 // a user from the system, typically during user management or account removal processes.
 const deleteUser = `DELETE FROM USER WHERE id = ?;`
+
+// getLikesByDomainId retrieves all likes for a specific domain by domain ID.
+const getLikesByDomainId = `SELECT
+                             Likes.id,
+                             Likes.uri,
+                             Likes.domain_id,
+                             Likes.count
+                           FROM Likes
+                           WHERE Likes.domain_id = ?
+                           ORDER BY Likes.count DESC`
+
+// getLikesTimeline retrieves the timeline of likes for a specific URI and domain,
+// grouped by date, to power the likes-over-time graph.
+const getLikesTimeline = `SELECT
+                           DATE(Liked_IPs.created_time) as like_date,
+                           COUNT(*) as like_count
+                          FROM Liked_IPs
+                          JOIN Domain ON Liked_IPs.domain = Domain.domain
+                          WHERE Domain.id = ?
+                          AND Liked_IPs.path = ?
+                          GROUP BY DATE(Liked_IPs.created_time)
+                          ORDER BY like_date ASC`

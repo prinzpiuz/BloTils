@@ -36,6 +36,8 @@ func ContentTypeSettingMiddleware(next http.Handler) http.Handler {
 			w.Header().Add("Content-Type", "text/css")
 		case strings.Contains(r.URL.Path, "js"):
 			w.Header().Add("Content-Type", "text/javascript")
+		case strings.Contains(r.URL.Path, ".svg"):
+			w.Header().Add("Content-Type", "image/svg+xml")
 		case strings.Contains(r.URL.Path, "favicon"):
 			w.Header().Add("Content-Type", "image/png")
 		default:
