@@ -211,7 +211,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			SetSuccessFlash(w, r, "Login Successfull")
+			SetSuccessFlash(w, r, "Login Successful")
 			if user.IsAdmin() {
 				http.Redirect(w, r, "/admin", http.StatusSeeOther)
 				return
@@ -241,6 +241,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	SetSuccessFlash(w, r, "Logout Successfull")
+	SetSuccessFlash(w, r, "Logout Successful")
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

@@ -35,7 +35,7 @@ func AddDomain(w http.ResponseWriter, r *http.Request) {
 		enableComment := getToggleValues(r, "enableComments")
 		domain := db.DomainFactory(sessionData.User, domainName, enableLike, enableComment, 0)
 		db.AddDomainAndSettings(db_connection, domain)
-		SetSuccessFlash(w, r, "Domain Added Succesfully")
+		SetSuccessFlash(w, r, "Domain Added Successfully")
 		http.Redirect(w, r, "/domains", http.StatusSeeOther)
 	}
 
@@ -77,7 +77,7 @@ func DeleteDomain(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error Deleting Domain %d: %v", domainId, err)
 			SetErrorFlash(w, r, "Error Deleting Domain")
 		}
-		SetSuccessFlash(w, r, "Domain Deleted Succesfully")
+		SetSuccessFlash(w, r, "Domain Deleted Successfully")
 		http.Redirect(w, r, "/domains", http.StatusSeeOther)
 	}
 }

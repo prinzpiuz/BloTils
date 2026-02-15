@@ -207,7 +207,7 @@ func getPath(r *http.Request, w http.ResponseWriter) string {
 // setCookie sets an HTTP cookie with the provided name, value, and path. The cookie is set with
 // HttpOnly, Secure, and SameSite=None attributes to ensure it is only accessible by the server
 // and is transmitted securely over HTTPS.
-func setCookie(r *http.Request, w http.ResponseWriter, name string, value string, path string, httpOnly bool, expires time.Time, maxAge int, SameSitePolicy http.SameSite) {
+func setCookie(r *http.Request, w http.ResponseWriter, name string, value string, path string, httpOnly bool, expires time.Time, maxAge int, sameSitePolicy http.SameSite) {
 	var secure = false
 	appData := GetAppDataFromContext(r.Context())
 	if !appData.AppConfig.IsEmpty() {
@@ -218,7 +218,7 @@ func setCookie(r *http.Request, w http.ResponseWriter, name string, value string
 		Value:    value,
 		HttpOnly: httpOnly,
 		Secure:   secure,
-		SameSite: SameSitePolicy,
+		SameSite: sameSitePolicy,
 		MaxAge:   maxAge,
 	}
 	if !expires.IsZero() {

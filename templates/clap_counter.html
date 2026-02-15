@@ -7,7 +7,7 @@
 
 <div class="demo-container">
     <div class="demo-header">
-        <h1>Love Counter Demo</h1>
+        <h1>Like Counter Demo</h1>
         <p class="demo-subtitle">
             See how the BloTils love counter works on your blog
         </p>
@@ -112,10 +112,23 @@
 &lt;span class="love-count" data-blotils-count&gt;0&lt;/span&gt;
 
 &lt;script
-  data-blotils_url="https://blotils.com/"
-  data-blotils_like_btn="blotils_like_btn"
-  src="https://blotils.com/static/js/BloTils.js"&gt;
+  src="https://cdn.jsdelivr.net/gh/prinzpiuz/BloTils@v1.0.0/dist/BloTils.min.js"
+  integrity="sha384-YOUR_HASH_HERE"
+  crossorigin="anonymous"
+  data-blotils_url="https://blotils.prinzpiuz.in"
+  data-blotils_like_btn="blotils_like_btn"&gt;
 &lt;/script&gt;</code></pre>
+        </div>
+
+        <div class="version-note">
+            <strong>📌 Version Pinning:</strong> Replace
+            <code>v1.0.0</code> with the latest version. Check
+            <a
+                href="https://github.com/prinzpiuz/BloTils/releases"
+                target="_blank"
+                >releases</a
+            >
+            for the latest version and SRI hash.
         </div>
 
         <script src="/{{.Static}}/js/clap_counter.js"></script>
