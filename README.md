@@ -40,16 +40,13 @@ Efficient and extensible blog utilities built with Go, powered by SQLite and des
 # 1. Create data directory and files
 mkdir -p BloTils_Data
 touch BloTils_Data/BloTils.db
-cp config.example.json BloTils_Data/config.json
+cp config.json BloTils_Data/config.json
 
 # 2. Set permissions for container user (UID 1001)
 sudo chown -R 1001:1001 BloTils_Data/
 
-# 3. Create .env file
-cat > .env << EOF
-BT_ENV=production
-BT_SMTP_ENABLED=false
-EOF
+# 3. copy .env file
+cp env.sample .env
 
 # 4. Run container
 docker run -d \
@@ -118,11 +115,10 @@ BloTils uses a hybrid configuration system:
 git clone https://github.com/prinzpiuz/BloTils.git
 cd BloTils
 
-# 2. Copy example config
-cp config.example.json config.json
+# 2. Update values in config.json
 
 # 3. Set environment variables (or create .env file)
-export BT_ENV=dev
+cp env.sample .env
 
 # 4. Run the application
 go run bloTils.go

@@ -30,7 +30,7 @@ func Initialize(config *models.SMTPConfig) {
 	defaultMailer = &Mailer{config: config}
 
 	if !config.Enabled {
-		log.Println("Email service disabled (BT_SMTP_ENABLED=false)")
+		log.Println("Email service disabled")
 		return
 	}
 

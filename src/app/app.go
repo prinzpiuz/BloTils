@@ -4,6 +4,7 @@ import (
 	"BloTils/src/db"
 	mailer "BloTils/src/email"
 	"BloTils/src/models"
+	"BloTils/src/sentry"
 	"BloTils/src/server"
 	"fmt"
 	"log"
@@ -71,6 +72,11 @@ func InitApp(config *koanf.Koanf) *models.App {
 			FromName:  getConfigString(config, "SMTP_FROMNAME", "SMTPConfig.FromName", "BloTils"),
 			BaseURL:   getConfigString(config, "BASE_URL", "AppConfig.BaseURL", "http://localhost:8000"),
 		},
+		SentryConfig: models.SentryConfig{
+			Enabled: getConfigBool(config, "SENTRY_ENABLED", "SentryConfig.Enabled", false),
+			DSN:     getSecret(config, "SENTRY_DSN"),
+			Debug:   getConfigBool(config, "SENTRY_DEBUG", "SentryConfig.Debug", false),
+		},
 	}
 
 	// Validate required configuration
@@ -93,6 +99,7 @@ func Start(app models.App) {
 		log.Fatalf("Error Initializing DB: %v", err)
 	}
 	mailer.Initialize(&app.SMTPConfig)
+	sentry.Initialize(&app.SentryConfig)
 	// anything should be done before starting the server can be added here (e.g. background tasks, etc.)
 	// Initialize server and register routes
 	serverConfig := server.InitServer(&app.ServerConfig)
@@ -111,6 +118,8 @@ func Logo(a models.App) {
 	fmt.Print(getversion(a.AppConfig))
 	fmt.Print(getPort(a.ServerConfig))
 	fmt.Printf("Environment: %s", a.AppConfig.Env)
+	fmt.Println()
+	fmt.Printf("Debug: %t", a.SentryConfig.Debug)
 	fmt.Println()
 	fmt.Println()
 }

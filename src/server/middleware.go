@@ -2,12 +2,15 @@ package server
 
 import (
 	"BloTils/src/db"
+	"BloTils/src/sentry"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"slices"
 	"strings"
+
+	sentryhttp "github.com/getsentry/sentry-go/http"
 )
 
 // ContextUpdateMiddleware is a higher-order middleware function that adds custom context data to the request context.
@@ -62,6 +65,24 @@ func CORSPolicySettingMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// Middleware returns an HTTP middleware for Sentry
+// If Sentry is not initialized, it returns a pass-through middleware
+func SentryMiddleware() func(http.Handler) http.Handler {
+	if !sentry.IsEnabled() {
+		// Return pass-through middleware
+		return func(next http.Handler) http.Handler {
+			return next
+		}
+	}
+
+	// Return Sentry middleware
+	sentryHandler := sentryhttp.New(sentryhttp.Options{
+		Repanic: true, // Re-panic after capturing
+	})
+
+	return sentryHandler.Handle
 }
 
 // csrfMiddleware is a middleware function that provides Cross-Site Request Forgery (CSRF) protection
