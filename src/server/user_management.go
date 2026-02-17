@@ -131,7 +131,10 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 			token := generateSecureToken()
 			err := db.SetRestToken(db_connection, token, user.Id)
 			if err == nil {
-				mailer.SendResetPasswordEmail(email, token)
+				err := mailer.SendResetPasswordEmail(email, token)
+				if err != nil {
+					log.Printf("Failed to send reset password email to %s: %v", email, err)
+				}
 				SetSuccessFlash(w, r, "Reset Mail Sent")
 				http.Redirect(w, r, "/forgot_password", http.StatusSeeOther)
 				return

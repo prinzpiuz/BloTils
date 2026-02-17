@@ -99,11 +99,16 @@ func (m *Mailer) sendWithTLS(addr string, auth smtp.Auth, from, to, msg string) 
 	if err != nil {
 		return fmt.Errorf("dial failed: %w", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Printf("Error closing SMTP connection: %v", err)
+		}
+	}()
 
 	// Start TLS
 	tlsConfig := &tls.Config{
 		ServerName: m.config.Host,
+		MinVersion: tls.VersionTLS12,
 	}
 	if err = conn.StartTLS(tlsConfig); err != nil {
 		return fmt.Errorf("STARTTLS failed: %w", err)

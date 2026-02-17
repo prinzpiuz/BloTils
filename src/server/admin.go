@@ -29,7 +29,10 @@ func ApproveUserRequest(w http.ResponseWriter, r *http.Request) {
 			SetErrorFlash(w, r, "Error Approving User")
 		}
 		SetSuccessFlash(w, r, "User Request Approved")
-		mailer.SendAccountApprovedEmail(email, email)
+		err = mailer.SendAccountApprovedEmail(email, email)
+		if err != nil {
+			log.Printf("Error Sending Email to User %s: %v", email, err)
+		}
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 		return
 	}
