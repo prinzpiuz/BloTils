@@ -105,9 +105,6 @@ func getSecret(config *koanf.Koanf, envKey string) string {
 
 // validateConfig checks for required configuration values and logs warnings.
 func validateConfig(app *models.App) {
-	if !app.AppConfig.IsProduction() {
-		return
-	}
 
 	if !app.SMTPConfig.Enabled {
 		log.Println("Info: SMTP disabled. Email features will not work.")
@@ -133,6 +130,10 @@ func validateConfig(app *models.App) {
 	}
 	if app.AppConfig.BaseURL == "" {
 		log.Println("Warning: BT_BASE_URL not set. Email links may not work correctly.")
+	}
+	if app.SentryConfig.Enabled && app.SentryConfig.DSN == "" {
+		log.Println("Warning: Sentry enabled but DSN not configured. Sentry will be disabled.")
+		app.SentryConfig.Enabled = false
 	}
 	if len(missingConfigs) > 0 {
 		log.Printf("Warning: SMTP enabled but missing required config: %s",

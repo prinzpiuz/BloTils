@@ -16,14 +16,17 @@ import (
 	_ "github.com/mattn/go-sqlite3" // Ensure SQLite driver is registered for database/sql
 )
 
+var new_db *sql.DB
+
 // closeDB safely closes the provided database connection.
 // It defers the closing operation and logs any error encountered during the closure.
 // This function helps ensure that database resources are properly released.
-func closeDB(new_db *sql.DB) {
+func CloseDB() {
 	defer func() {
 		if err := new_db.Close(); err != nil {
 			log.Println("Error closing database connection:", err)
 		}
+		log.Println("Database connection closed")
 	}()
 }
 
@@ -69,7 +72,7 @@ func InitDB(db *models.DBConfig) error {
 	err = runMigrations(new_db, db.MigrationFiles)
 	if err != nil {
 		log.Println("Error Running Migrations")
-		closeDB(new_db)
+		CloseDB()
 		db.Connection = nil
 		return err
 	}

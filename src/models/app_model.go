@@ -5,6 +5,7 @@ type App struct {
 	ServerConfig ServerConfig
 	DBConfig     DBConfig
 	SMTPConfig   SMTPConfig
+	SentryConfig SentryConfig
 }
 
 func (app App) IsEmpty() bool {

@@ -1,10 +1,5 @@
-## BloTils Docker Image
-
-Efficient, secure container image for BloTils, based on Go and Alpine Linux.
-
 #### Table of Contents
 
-- [Description](#description)
 - [Quick Start](#quick-start)
 - [Docker Compose](#docker-compose)
 - [Environment Variables](#environment-variables)
@@ -14,18 +9,6 @@ Efficient, secure container image for BloTils, based on Go and Alpine Linux.
 - [Building Locally](#building-locally)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
-
----
-
-#### Description
-
-This image runs the BloTils application using Go 1.24 and Alpine Linux. It includes:
-
-- Built-in SQLite support
-- Environment variable configuration
-- SMTP email support (works with any provider)
-- Robust healthcheck for production monitoring
-- Non-root user execution for security
 
 ---
 
@@ -47,7 +30,7 @@ mkdir -p BloTils_Data
 touch BloTils_Data/BloTils.db
 
 # Copy config file
-cp [config.json](../config.json) BloTils_Data/config.json
+cp <Project_Root>/config.json BloTils_Data/config.json
 
 # Set permissions for container user (UID 1001)
 sudo chown -R 1001:1001 BloTils_Data/

@@ -17,5 +17,9 @@
     },
     "SMTPConfig": {
         "Enabled": true
+    },
+    "SentryConfig": {
+        "Enabled": false,
+        "Debug": false
     }
 }

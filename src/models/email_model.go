@@ -8,6 +8,6 @@ type SMTPConfig struct {
 	Password  string
 	FromEmail string
 	FromName  string
-	BaseURL   string // For generating links in emails
-	Enabled   bool   // Easy toggle for development
+	BaseURL   string
+	Enabled   bool
 }
