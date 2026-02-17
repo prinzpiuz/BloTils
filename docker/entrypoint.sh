@@ -1,26 +1,32 @@
 #!/bin/sh
-BLOTILS_DIR="/blotils"
-BLOTILS_UID=1001
-BLOTILS_GID=1001
+set -e
 
-echo "Ensuring ownership and permissions for $BLOTILS_DIR..."
+BLOTILS_DIR="${BLOTILS_DIR:-/blotils}"
 
-# Set correct ownership and permissions for the directory
-chown "${BLOTILS_UID}:${BLOTILS_GID}" "$BLOTILS_DIR"
-chmod 770 "$BLOTILS_DIR"
+echo "Starting BloTils..."
 
-# (Optionally, set file permissions as before)
-if [ -f "$BLOTILS_DIR/BloTils.db" ]; then
-    chown "${BLOTILS_UID}:${BLOTILS_GID}" "$BLOTILS_DIR/BloTils.db"
-    chmod 660 "$BLOTILS_DIR/BloTils.db"
+if [ "$(id -u)" = "0" ]; then
+    echo "Running as root, adjusting permissions..."
+
+    # Fix ownership of data directory
+    if [ -d "$BLOTILS_DIR" ]; then
+        chown blotils:blotils "$BLOTILS_DIR"
+    fi
+
+    # Fix ownership of database file
+    if [ -f "$BLOTILS_DIR/BloTils.db" ]; then
+        chown blotils:blotils "$BLOTILS_DIR/BloTils.db"
+        chmod 660 "$BLOTILS_DIR/BloTils.db"
+    fi
+
+    # Fix ownership of config file
+    if [ -f "$BLOTILS_DIR/config.json" ]; then
+        chown blotils:blotils "$BLOTILS_DIR/config.json"
+        chmod 640 "$BLOTILS_DIR/config.json"
+    fi
+
+    echo "Permissions adjusted. Switching to blotils user..."
+    exec su-exec blotils "$@"
+else
+    exec "$@"
 fi
-
-if [ -f "$BLOTILS_DIR/config.json" ]; then
-    chown "${BLOTILS_UID}:${BLOTILS_GID}" "$BLOTILS_DIR/config.json"
-    chmod 640 "$BLOTILS_DIR/config.json"
-fi
-
-echo "Permissions adjusted. Starting application..."
-
-# Now switch to the proper user and run the application
-exec su-exec blotils "$@"

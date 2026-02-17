@@ -1,0 +1,186 @@
+name: Build and Release BloTils.js
+
+on:
+    push:
+        tags:
+            - "*.*.*"
+        branches:
+            - release
+        paths:
+            - "static/js/BloTils.js"
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Install Terser
+              run: npm install -g terser
+
+            - name: Create dist directory
+              run: mkdir -p dist
+
+            - name: Copy original file
+              run: cp static/js/BloTils.js dist/BloTils.js
+
+            - name: Minify JavaScript
+              run: |
+                  terser dist/BloTils.js \
+                    --compress \
+                    --mangle \
+                    --output dist/BloTils.min.js \
+                    --comments "/^!|@license|@preserve/"
+
+            - name: Generate SRI hashes
+              run: |
+                  # Generate hashes for both files
+                  HASH_ORIGINAL=$(cat dist/BloTils.js | openssl dgst -sha384 -binary | openssl base64 -A)
+                  HASH_MINIFIED=$(cat dist/BloTils.min.js | openssl dgst -sha384 -binary | openssl base64 -A)
+
+                  # Get version from tag
+                  VERSION=${GITHUB_REF#refs/tags/}
+
+                  # Create integrity.json
+                  cat > dist/integrity.json << EOF
+                  {
+                    "version": "${VERSION}",
+                    "files": {
+                      "BloTils.js": {
+                        "sri": "sha384-${HASH_ORIGINAL}",
+                        "size": "$(wc -c < dist/BloTils.js | tr -d ' ') bytes"
+                      },
+                      "BloTils.min.js": {
+                        "sri": "sha384-${HASH_MINIFIED}",
+                        "size": "$(wc -c < dist/BloTils.min.js | tr -d ' ') bytes"
+                      }
+                    },
+                    "jsdelivr": {
+                      "original": "https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.js",
+                      "minified": "https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.min.js"
+                    }
+                  }
+                  EOF
+
+                  cat > dist/USAGE.md << EOF
+                  # BloTils.js ${VERSION}
+
+                  ## CDN Links (jsDelivr)
+
+                  ### Minified (Recommended for production)
+                  \`\`\`html
+                  <script
+                    src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.min.js"
+                    integrity="sha384-${HASH_MINIFIED}"
+                    crossorigin="anonymous"
+                    data-blotils_url="https://blotils.com/"
+                    data-blotils_like_btn="blotils_like_btn">
+                  </script>
+                  \`\`\`
+
+                  ### Original (For debugging)
+                  \`\`\`html
+                  <script
+                    src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.js"
+                    integrity="sha384-${HASH_ORIGINAL}"
+                    crossorigin="anonymous"
+                    data-blotils_url="https://blotils.com/"
+                    data-blotils_like_btn="blotils_like_btn">
+                  </script>
+                  \`\`\`
+
+                  ## Full Example
+
+                  \`\`\`html
+                  <div class="love-wrapper">
+                    <button id="blotils_like_btn" class="love-btn">❤️ Like</button>
+                    <span class="love-count" data-blotils-count>0</span>
+                  </div>
+
+                  <script
+                    src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.min.js"
+                    integrity="sha384-${HASH_MINIFIED}"
+                    crossorigin="anonymous"
+                    data-blotils_url="https://blotils.com/"
+                    data-blotils_like_btn="blotils_like_btn">
+                  </script>
+                  \`\`\`
+                  EOF
+
+                  # Save hashes for release notes
+                  echo "HASH_ORIGINAL=sha384-${HASH_ORIGINAL}" >> $GITHUB_ENV
+                  echo "HASH_MINIFIED=sha384-${HASH_MINIFIED}" >> $GITHUB_ENV
+                  echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+            - name: Display build info
+              run: |
+                  echo "=== Build Complete ==="
+                  echo "Version: ${{ env.VERSION }}"
+                  echo ""
+                  echo "Files:"
+                  ls -lh dist/
+                  echo ""
+                  echo "SRI Hashes:"
+                  echo "BloTils.js:     ${{ env.HASH_ORIGINAL }}"
+                  echo "BloTils.min.js: ${{ env.HASH_MINIFIED }}"
+
+            - name: Commit dist files
+              run: |
+                  git config --local user.email "github-actions[bot]@users.noreply.github.com"
+                  git config --local user.name "github-actions[bot]"
+                  git add dist/
+                  git commit -m "Build: ${{ env.VERSION }} - Add minified files and SRI hashes" || echo "No changes to commit"
+                  git push origin HEAD:main
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  name: BloTils.js ${{ env.VERSION }}
+                  body: |
+                      ## 📦 BloTils.js ${{ env.VERSION }}
+
+                      ### CDN Links
+
+                      **Minified (Recommended):**
+                      ```html
+                      <script
+                        src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/dist/BloTils.min.js"
+                        integrity="${{ env.HASH_MINIFIED }}"
+                        crossorigin="anonymous"
+                        data-blotils_url="https://blotils.com/"
+                        data-blotils_like_btn="blotils_like_btn">
+                      </script>
+                      ```
+
+                      **Original:**
+                      ```html
+                      <script
+                        src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/dist/BloTils.js"
+                        integrity="${{ env.HASH_ORIGINAL }}"
+                        crossorigin="anonymous"
+                        data-blotils_url="https://blotils.com/"
+                        data-blotils_like_btn="blotils_like_btn">
+                      </script>
+                      ```
+
+                      ### SRI Hashes
+                      | File | Integrity Hash |
+                      |------|----------------|
+                      | `BloTils.js` | `${{ env.HASH_ORIGINAL }}` |
+                      | `BloTils.min.js` | `${{ env.HASH_MINIFIED }}` |
+
+                  files: |
+                      dist/BloTils.js
+                      dist/BloTils.min.js
+                      dist/integrity.json
+                  draft: false
+                  prerelease: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

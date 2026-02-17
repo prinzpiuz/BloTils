@@ -2,6 +2,7 @@ package server
 
 import (
 	"BloTils/src/db"
+	mailer "BloTils/src/email"
 	"log"
 	"net/http"
 	"strconv"
@@ -22,13 +23,15 @@ func ApproveUserRequest(w http.ResponseWriter, r *http.Request) {
 		db_connection := GetDbConnection(r)
 		userId, err := strconv.Atoi(getUrlVars(r, "user_id"))
 		commonIntParsingError(w, r, err)
-		err = db.ApproveUser(db_connection, userId)
+		email, err := db.ApproveUser(db_connection, userId)
 		if err != nil {
 			log.Printf("Error Approving User %d: %v", userId, err)
 			SetErrorFlash(w, r, "Error Approving User")
 		}
 		SetSuccessFlash(w, r, "User Request Approved")
+		mailer.SendAccountApprovedEmail(email, email)
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
 	}
 }
 

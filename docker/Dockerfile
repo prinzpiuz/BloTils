@@ -1,41 +1,38 @@
-FROM golang:1.24.4-alpine3.21 AS builder
+
+# Build stage
+FROM golang:1.24.4-alpine3.22 AS builder
 
 RUN apk add --no-cache build-base sqlite-dev
 
-WORKDIR /blotils
+WORKDIR /build
 
-COPY ../go.mod .
-COPY ../go.sum .
-
+# Cache dependencies
+COPY ../go.mod ../go.sum ./
 RUN go mod download
+
 
 COPY ../ .
 
-RUN CGO_ENABLED=1 go build -ldflags "-s -w" -o /blotils/BloTils .
+RUN CGO_ENABLED=1 go build -ldflags "-s -w" -o /build/BloTils .
 
-
-FROM alpine:latest
+# Runtime stage
+FROM alpine:3.22
 
 RUN apk add --no-cache sqlite su-exec && \
     addgroup -g 1001 -S blotils && \
-    adduser -u 1001 -S blotils -G blotils
+    adduser -u 1001 -S blotils -G blotils && \
+    mkdir -p /blotils && \
+    chown blotils:blotils /blotils
 
 WORKDIR /blotils
 
-ARG BT_MAILGUNPASSWORD
-ARG BT_ENV
-
-ENV BT_MAILGUNPASSWORD=$BT_MAILGUNPASSWORD
-ENV BT_ENV=$BT_ENV
-
-COPY --from=builder /blotils/BloTils .
-
-COPY ../migrations /blotils/migrations/.
-COPY ../static /blotils/static/.
-COPY ../templates /blotils/templates/.
-
-COPY ../docker/entrypoint.sh /blotils/.
-RUN chmod +x /blotils/entrypoint.sh
+# Copy application files
+COPY --from=builder /build/BloTils .
+COPY --chown=blotils:blotils ../migrations/ ./migrations/
+COPY --chown=blotils:blotils ../static/ ./static/
+COPY --chown=blotils:blotils ../templates/ ./templates/
+COPY --chown=blotils:blotils ../docker/entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8000
 

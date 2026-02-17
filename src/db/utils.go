@@ -4,6 +4,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 )
@@ -401,15 +402,26 @@ func GetAllUsers(db *sql.DB) []User {
 
 }
 
-// ApproveUser updates the status of a user to approved in the database
-// It takes a database connection and a user ID as parameters
-// Returns an error if the database operation fails
-func ApproveUser(db *sql.DB, userId int) error {
-	_, err := db.Exec(approveUser, userId)
+// ApproveUser approves a pending user account and returns the user's email.
+//
+// It updates the user's record with:
+// - user_role = 1 (admin)
+// - is_active = 1 (active)
+// - user_status = 1 (approved)
+//
+// The function only approves users with a current user_status of 2 (pending).
+// If the user is not found or is already approved, it returns an error indicating
+// the user was not found or already approved.
+func ApproveUser(db *sql.DB, userID int) (string, error) {
+	var email string
+	err := db.QueryRow(approveUser, userID).Scan(&email)
 	if err != nil {
-		return err
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("user not found or already approved")
+		}
+		return "", fmt.Errorf("failed to approve user: %w", err)
 	}
-	return nil
+	return email, nil
 }
 
 // DeleteUser removes a user from the database by their user ID

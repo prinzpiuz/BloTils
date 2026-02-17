@@ -246,11 +246,12 @@ const getAllusers = `SELECT
 // for a specific user identified by their unique ID. This query is used in user management processes
 // to grant full access and confirm a user's account.
 const approveUser = `UPDATE USER
-					 SET user_role = 1,
+					 SET user_role = 2,
 						 is_active = 1,
 						 user_status = 1
 					WHERE  USER.id = ?
-					AND USER.user_status = 2`
+					AND USER.user_status = 2
+					RETURNING email`
 
 // deleteUser is a SQL query that removes a specific user record from the USER table
 // by matching the provided user ID. This query is used to permanently delete
