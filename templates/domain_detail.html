@@ -1,0 +1,51 @@
+{{ define "content" }}
+<div class="domain-detail-container">
+    <div class="domain-detail-header">
+        <a href="/domains" class="back-link">&larr; Back to Domains</a>
+        <h2 class="domain-title">{{ .Data.domain.Domain }}</h2>
+    </div>
+
+    {{ if .Data.likes }}
+    <table class="user-table likes-table">
+        <thead>
+            <tr>
+                <th>Post</th>
+                <th>Likes</th>
+                <th>Graph</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .Data.likes }}
+            <tr>
+                <td class="post-uri">{{ .URI }}</td>
+                <td class="like-count">{{ .Count }}</td>
+                <td>
+                    <button
+                        class="graph-toggle-btn"
+                        data-uri="{{ .URI }}"
+                        data-domain-id="{{ .GetDomainID }}"
+                    >
+                        View Graph
+                    </button>
+                </td>
+            </tr>
+            <tr class="graph-row" id="graph-row-{{ .GetDomainID }}-{{ .Count }}" style="display: none;">
+                <td colspan="3">
+                    <div class="graph-container">
+                        <canvas class="likes-chart"></canvas>
+                    </div>
+                </td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+    {{ else }}
+    <div class="no-data-container">
+        <p class="no-data">No likes recorded yet for this domain.</p>
+    </div>
+    {{ end }}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="/{{ .Static }}/js/domain_detail.js"></script>
+{{ end }}

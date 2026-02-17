@@ -2,6 +2,7 @@ package server
 
 import (
 	"BloTils/src/db"
+	mailer "BloTils/src/email"
 	"log"
 	"net/http"
 	"strconv"
@@ -22,12 +23,18 @@ func ApproveUserRequest(w http.ResponseWriter, r *http.Request) {
 		db_connection := GetDbConnection(r)
 		userId, err := strconv.Atoi(getUrlVars(r, "user_id"))
 		commonIntParsingError(w, r, err)
-		err = db.ApproveUser(db_connection, userId)
+		email, err := db.ApproveUser(db_connection, userId)
 		if err != nil {
 			log.Printf("Error Approving User %d: %v", userId, err)
-			// TODO set message
+			SetErrorFlash(w, r, "Error Approving User")
+		}
+		SetSuccessFlash(w, r, "User Request Approved")
+		err = mailer.SendAccountApprovedEmail(email, email)
+		if err != nil {
+			log.Printf("Error Sending Email to User %s: %v", email, err)
 		}
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
+		return
 	}
 }
 
@@ -41,9 +48,10 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 			err = db.DeleteUser(db_connection, userId)
 			if err != nil {
 				log.Printf("Error Deleting User %d: %v", userId, err)
-				// TODO set message
+				SetErrorFlash(w, r, "Error Deleting User")
 			}
 		}
+		SetSuccessFlash(w, r, "User Deleted Successfully")
 		http.Redirect(w, r, "/admin", http.StatusSeeOther)
 	}
 }

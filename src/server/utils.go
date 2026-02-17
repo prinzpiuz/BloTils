@@ -150,7 +150,7 @@ func getDomain(url_string string) string {
 // check_for_domain checks if the given domain name is configured for the Blotils application.
 // It retrieves the domain from the database and performs the following checks:
 //  1. If the domain is not found, it returns an error with a log message.
-//  2. If the domain is found and the context is a ClapCounter, it checks if likes are enabled for the domain.
+//  2. If the domain is found and the context is a clapContext, it checks if likes are enabled for the domain.
 //     If likes are not enabled, it returns an error with a log message.
 //
 // If all checks pass, it returns nil.
@@ -162,7 +162,7 @@ func checkForDomain(r *http.Request, domain_name string, context any) (db.Domain
 		log.Printf(msg, domain_name)
 		return db.Domain{}, fmt.Errorf(msg, domain_name)
 	}
-	_, ok := context.(ClapCounter)
+	_, ok := context.(clapContext)
 	if ok {
 		if !domain.LikesEnabled() {
 			msg := "like counting is not enabled for this domain (%s)"
@@ -207,7 +207,7 @@ func getPath(r *http.Request, w http.ResponseWriter) string {
 // setCookie sets an HTTP cookie with the provided name, value, and path. The cookie is set with
 // HttpOnly, Secure, and SameSite=None attributes to ensure it is only accessible by the server
 // and is transmitted securely over HTTPS.
-func setCookie(r *http.Request, w http.ResponseWriter, name string, value string, expires time.Time) {
+func setCookie(r *http.Request, w http.ResponseWriter, name string, value string, path string, httpOnly bool, expires time.Time, maxAge int, sameSitePolicy http.SameSite) {
 	var secure = false
 	appData := GetAppDataFromContext(r.Context())
 	if !appData.AppConfig.IsEmpty() {
@@ -216,10 +216,16 @@ func setCookie(r *http.Request, w http.ResponseWriter, name string, value string
 	cookie := http.Cookie{
 		Name:     name,
 		Value:    value,
-		Expires:  expires,
-		HttpOnly: true,
+		HttpOnly: httpOnly,
 		Secure:   secure,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: sameSitePolicy,
+		MaxAge:   maxAge,
+	}
+	if !expires.IsZero() {
+		cookie.Expires = expires
+	}
+	if path != "" {
+		cookie.Path = path
 	}
 	http.SetCookie(w, &cookie)
 
@@ -252,8 +258,7 @@ type TemplateData struct {
 	MetaDesc  string
 	Static    string
 	CSRFToken string
-	Messages  []string
-	Errors    []string
+	Flash     *FlashMessage
 	Session   *db.Session
 	AppConfig models.AppConfig
 	Data      map[string]any
@@ -277,6 +282,7 @@ func setCommonTemplateData(r *http.Request, w http.ResponseWriter) TemplateData 
 	data.CSRFToken = generateCSRFToken(r, w)
 	data.Session = GetSessionData(r)
 	data.AppConfig = appData.AppConfig
+	data.Flash = GetFlash(w, r)
 	return data
 }
 
@@ -351,22 +357,14 @@ func generateSecureToken() string {
 // New CSRF token generation
 func generateCSRFToken(r *http.Request, w http.ResponseWriter) string {
 	csrfToken := generateSecureToken()
-	setCookie(r, w, CSRFCookie, csrfToken, time.Now().Add(CSRFExpiry))
+	setCookie(r, w, CSRFCookie, csrfToken, "", true, time.Now().Add(CSRFExpiry), 0, http.SameSiteStrictMode)
 	return csrfToken
 }
 
 func generateSessionToken(r *http.Request, w http.ResponseWriter) string {
 	sessionToken := generateSecureToken()
-	setCookie(r, w, SessionCookie, sessionToken, time.Now().Add(SessionExpiry))
+	setCookie(r, w, SessionCookie, sessionToken, "", true, time.Now().Add(SessionExpiry), 0, http.SameSiteStrictMode)
 	return sessionToken
-}
-
-// sendMessagePage renders a message page with a single message using the provided HTTP request and response writer.
-// It sets common template data, adds the specified message, and generates an HTML page using the "layout" and "message_page" templates.
-func sendMessagePage(r *http.Request, w http.ResponseWriter, msg string) {
-	templateData := setCommonTemplateData(r, w)
-	templateData.Messages = []string{msg}
-	generateHTML(w, templateData, "layout", "message_page")
 }
 
 // getUrlVars retrieves a specific URL variable from an HTTP request using Gorilla Mux.

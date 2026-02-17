@@ -39,3 +39,4 @@ core
 .env
 
 BloTils.db-journal
+BloTils_Data/

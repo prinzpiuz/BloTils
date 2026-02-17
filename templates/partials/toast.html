@@ -1,0 +1,19 @@
+<div id="toast-container" class="toast-container"></div>
+
+<template id="toast-template">
+    <div class="toast" role="alert">
+        <div class="toast-content">
+            <span class="toast-icon"></span>
+            <span class="toast-message"></span>
+        </div>
+        <button class="toast-close" aria-label="Close">&times;</button>
+    </div>
+</template>
+
+{{if .Flash}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        showToast('{{.Flash.Type}}', '{{.Flash.Message}}');
+    });
+</script>
+{{end}}
