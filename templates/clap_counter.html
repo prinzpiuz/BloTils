@@ -1,16 +1,144 @@
 {{ define "content" }}
 
-<h1>Clap Counter</h1>
-<div id="blotils">
-  <button id="blotils_like_btn" type="button">like</button>
-  <p>count:0</p>
+<link
+    rel="stylesheet"
+    href="/{{.Static}}/css/clap_counter.css"
+/>
+
+<div class="demo-container">
+    <div class="demo-header">
+        <h1>Like Counter Demo</h1>
+        <p class="demo-subtitle">
+            See how the BloTils love counter works on your blog
+        </p>
+    </div>
+
+    <article class="mock-post">
+        <div class="post-meta">
+            <span class="post-date">January 15, 2025</span>
+            <span class="post-read-time">5 min read</span>
+        </div>
+
+        <h2 class="post-title">Getting Started with Static Blogs</h2>
+
+        <p class="post-content">
+            Static blogs have revolutionized how we think about web publishing.
+            With tools like Hugo, Jekyll, and Astro, you can create blazing-fast
+            websites without the overhead of traditional CMS platforms.
+        </p>
+
+        <p class="post-content">
+            The beauty of static sites lies in their simplicity. No databases to
+            manage, no server-side processing, and incredibly easy deployment to
+            platforms like Netlify, Vercel, or GitHub Pages.
+        </p>
+
+        <p class="post-content">
+            But what about interactivity? That's where BloTils comes in. Add
+            likes, comments, and analytics to your static blog without
+            compromising its core benefits.
+        </p>
+
+        <!-- Love Button Section -->
+        <div class="love-section">
+            <p class="love-prompt">Enjoyed this post?</p>
+            <div class="love-wrapper">
+                <button
+                    id="blotils_like_btn"
+                    class="love-btn"
+                    type="button"
+                    aria-label="Like this post"
+                >
+                    <svg
+                        class="heart-icon"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path
+                            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                        />
+                    </svg>
+                </button>
+                <span
+                    class="love-count"
+                    data-blotils-count
+                    >0</span
+                >
+            </div>
+        </div>
+    </article>
+
+    <!-- Integration Guide -->
+    <section class="integration-section">
+        <h3>Add to Your Blog</h3>
+        <p class="integration-desc">
+            Copy and paste this snippet into your HTML page:
+        </p>
+
+        <!-- Basic Usage -->
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">HTML - Basic</span>
+                <button
+                    class="copy-btn"
+                    onclick="copyCode(this)"
+                    aria-label="Copy code"
+                >
+                    <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <rect
+                            x="9"
+                            y="9"
+                            width="13"
+                            height="13"
+                            rx="2"
+                            ry="2"
+                        ></rect>
+                        <path
+                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                        ></path>
+                    </svg>
+                    <span>Copy</span>
+                </button>
+            </div>
+            <pre><code>&lt;!-- BloTils Love Counter --&gt;
+&lt;button id="blotils_like_btn"&gt;❤️ Like&lt;/button&gt;
+&lt;span class="love-count" data-blotils-count&gt;0&lt;/span&gt;
+
+&lt;script
+  src="https://cdn.jsdelivr.net/gh/prinzpiuz/BloTils@v1.0.0/dist/BloTils.min.js"
+  integrity="sha384-YOUR_HASH_HERE"
+  crossorigin="anonymous"
+  data-blotils_url="https://blotils.prinzpiuz.in"
+  data-blotils_like_btn="blotils_like_btn"&gt;
+&lt;/script&gt;</code></pre>
+        </div>
+
+        <div class="version-note">
+            <strong>📌 Version Pinning:</strong> Replace
+            <code>v1.0.0</code> with the latest version. Check
+            <a
+                href="https://github.com/prinzpiuz/BloTils/releases"
+                target="_blank"
+                >releases</a
+            >
+            for the latest version and SRI hash.
+        </div>
+
+        <script src="/{{.Static}}/js/clap_counter.js"></script>
+
+        <script
+            data-blotils_url="http://blotils-dev.prinzpiuz.in:8000/"
+            data-blotils_like_btn="blotils_like_btn"
+            src="/{{.Static}}/js/BloTils.js"
+        ></script>
+
+        {{ end }}
+    </section>
 </div>
-
-<script
-  data-blotils_url="http://blotils.com:8000/"
-  data-blotils_like_btn="blotils_like_btn"
-  async
-  src="http://blotils.com:8000/static/js/BloTils.js"
-></script>
-
-{{ end }}

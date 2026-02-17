@@ -22,16 +22,14 @@ var AppConfig = models.AppConfig{
 	Version:       "0.0.1",
 	Env:           "test",
 	BaseDirectory: "../",
+	BaseURL:       "127.0.0.1:8000",
 }
 
-var EmailConfig = models.EmailSettings{
-	FromMail:       "noreply@blo-tils.com",
-	SendgridApiKey: "",
-}
+var SMTPConfig = models.SMTPConfig{}
 
 var App = &models.App{
-	AppConfig:     AppConfig,
-	ServerConfig:  ServerConfig,
-	DBConfig:      TestDBConfig,
-	EmailSettings: EmailConfig,
+	AppConfig:    AppConfig,
+	ServerConfig: ServerConfig,
+	DBConfig:     TestDBConfig,
+	SMTPConfig:   SMTPConfig,
 }

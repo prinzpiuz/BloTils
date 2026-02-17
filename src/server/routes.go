@@ -140,6 +140,14 @@ func RegisterRoutes(s *models.Server) {
 		LoginRequired: true,
 		DynamicRoute:  true,
 	})
+	setRoute(s, RouteDetails{
+		Path:          "/domain/{domain_id}",
+		Handler:       DomainDetailPage,
+		Methods:       []string{http.MethodGet},
+		AdminRequired: false,
+		LoginRequired: true,
+		DynamicRoute:  true,
+	})
 	// API routes
 	setRoute(s, RouteDetails{
 		Path:          "/api/v1/ping",
@@ -154,6 +162,14 @@ func RegisterRoutes(s *models.Server) {
 		Methods:       []string{http.MethodGet, http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: false,
+	})
+	setRoute(s, RouteDetails{
+		Path:          "/api/v1/domain/{domain_id}/likes_timeline",
+		Handler:       DomainLikesTimeline,
+		Methods:       []string{http.MethodGet},
+		AdminRequired: false,
+		LoginRequired: true,
+		DynamicRoute:  true,
 	})
 }
 

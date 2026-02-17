@@ -193,3 +193,9 @@ func (session Session) IsEmpty() bool {
 func (session Session) IsExpired() bool {
 	return session.Expiry.Before(time.Now())
 }
+
+// LikesTimeline represents a single data point for the likes-over-time graph.
+type LikesTimeline struct {
+	Date  string `json:"date"`
+	Count int    `json:"count"`
+}

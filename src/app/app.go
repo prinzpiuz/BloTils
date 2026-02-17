@@ -2,13 +2,12 @@ package app
 
 import (
 	"BloTils/src/db"
+	mailer "BloTils/src/email"
 	"BloTils/src/models"
 	"BloTils/src/server"
 	"fmt"
 	"log"
 	"os"
-	fp "path/filepath"
-	"strings"
 
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/providers/env"
@@ -16,87 +15,68 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-// envVarMapper maps environment variable names by removing the "BT_" prefix and replacing
-// underscores with dots, to match the configuration key format.
-func envVarMapper(s string) string {
-	return strings.ReplaceAll(strings.TrimPrefix(s, "BT_"), "_", ".")
-}
-
-// InitApp initializes and returns a new instance of models.App using the provided Koanf configuration.
-// It loads configuration values from a "config.json" file if it exists, and then overrides or supplements
-// them with environment variables prefixed with "BT_". The function populates the App, ServerConfig,
-// DBConfig, and EmailSettings fields of the models.App struct using the loaded configuration values.
-// If any configuration loading fails, the function logs a fatal error and terminates the application.
+// InitApp initializes and returns a new instance of models.App.
 //
-// Parameters:
-//   - config: A pointer to a koanf.Koanf instance containing configuration data.
+// Configuration precedence (highest to lowest):
+//  1. Environment variables (prefixed with BT_)
+//  2. config.json file
+//  3. Default values
 //
-// Returns:
-//   - A pointer to an initialized models.App struct.
+// Environment variables:
+//   - BT_ENV              : Application environment (dev, staging, production)
+//   - BT_DBLOCATION       : Database file path
+//   - BT_HOST             : Server host
+//   - BT_PORT             : Server port
+//   - BT_SENDGRIDAPIKEY   : SendGrid API key (secret, env only)
+//   - BT_FROMEMAIL        : Email sender address
 func InitApp(config *koanf.Koanf) *models.App {
-
-	// Check if config.json exists before loading
+	// Load config.json if it exists (provides defaults)
 	if _, err := os.Stat("config.json"); err == nil {
 		if err := config.Load(file.Provider("config.json"), json.Parser()); err != nil {
 			log.Fatalf("error loading config.json: %v", err)
 		}
 	}
 
+	// Load environment variables (overrides config.json)
 	if err := config.Load(env.Provider("BT_", ".", envVarMapper), nil); err != nil {
 		log.Fatalf("error loading environment variables: %v", err)
 	}
-
-	env := config.String("ENV")
-	if env == "" {
-		env = config.String("AppConfig.Env")
-	}
-	DBLOCATION := config.String("DBLOCATION")
-	if DBLOCATION == "" {
-		DBLOCATION = config.String("DBConfig.DBLocation")
-	}
-
 	app := &models.App{
 		AppConfig: models.AppConfig{
-			Name:          config.String("AppConfig.Name"),
-			Version:       config.String("AppConfig.Version"),
-			Env:           env,
+			Name:          getConfigString(config, "NAME", "AppConfig.Name", "BloTils"),
+			Version:       getConfigString(config, "VERSION", "AppConfig.Version", "dev"),
+			Env:           getConfigString(config, "ENV", "AppConfig.Env", "dev"),
+			BaseURL:       getConfigString(config, "BASE_URL", "AppConfig.BaseURL", "http://localhost:8000"),
 			BaseDirectory: getBaseDir(),
 		},
 		ServerConfig: models.ServerConfig{
-			Host:        config.String("ServerConfig.Host"),
-			Port:        config.Int("ServerConfig.Port"),
-			StaticFiles: config.String("ServerConfig.StaticFiles"),
+			Host:        getConfigString(config, "HOST", "ServerConfig.Host", ""),
+			Port:        getConfigInt(config, "PORT", "ServerConfig.Port", 8000),
+			StaticFiles: getConfigString(config, "STATICFILES", "ServerConfig.StaticFiles", "static"),
 		},
 		DBConfig: models.DBConfig{
-			DBLocation:      DBLOCATION,
-			Vacuum:          config.String("DBConfig.Vacuum"),
-			ForeignKeys:     config.Bool("DBConfig.ForeignKeys"),
+			DBLocation:      getConfigString(config, "DBLOCATION", "DBConfig.DBLocation", "./BloTils.db"),
+			Vacuum:          getConfigString(config, "DBVACUUM", "DBConfig.Vacuum", "full"),
+			ForeignKeys:     getConfigBool(config, "DBFOREIGNKEYS", "DBConfig.ForeignKeys", true),
 			DBBaseDirectory: getDBBaseDir(),
-			MigrationFiles:  "migrations",
+			MigrationFiles:  getConfigString(config, "MIGRATIONS", "DBConfig.MigrationFiles", "migrations"),
 		},
-		EmailSettings: models.EmailSettings{
-			FromMail:       config.String("EmailSettings.FromMail"),
-			SendgridApiKey: config.String("SENDGRIDAPIKEY"),
+		SMTPConfig: models.SMTPConfig{
+			Enabled:   getConfigBool(config, "SMTP_ENABLED", "SMTPConfig.Enabled", false),
+			Host:      getConfigString(config, "SMTP_HOST", "SMTPConfig.Host", ""),
+			Port:      getConfigInt(config, "SMTP_PORT", "SMTPConfig.Port", 587),
+			Username:  getSecret(config, "SMTP_USERNAME"),
+			Password:  getSecret(config, "SMTP_PASSWORD"),
+			FromEmail: getConfigString(config, "SMTP_FROM", "SMTPConfig.FromEmail", "noreply@blotils.com"),
+			FromName:  getConfigString(config, "SMTP_FROMNAME", "SMTPConfig.FromName", "BloTils"),
+			BaseURL:   getConfigString(config, "BASE_URL", "AppConfig.BaseURL", "http://localhost:8000"),
 		},
 	}
+
+	// Validate required configuration
+	validateConfig(app)
+
 	return app
-}
-
-// getBaseDir returns the current working directory as a string.
-// It panics if there is an error retrieving the working directory.
-func getBaseDir() string {
-	baseDir, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-	return baseDir
-}
-
-// getDBBaseDir returns the absolute path to the database base directory by joining
-// the application's base directory with the "src/db" subdirectory.
-func getDBBaseDir() string {
-	baseDir := getBaseDir()
-	return fp.Join(baseDir, "src/db")
 }
 
 // Start initializes and starts the application using the provided App configuration.
@@ -112,6 +92,9 @@ func Start(app models.App) {
 	if err != nil {
 		log.Fatalf("Error Initializing DB: %v", err)
 	}
+	mailer.Initialize(&app.SMTPConfig)
+	// anything should be done before starting the server can be added here (e.g. background tasks, etc.)
+	// Initialize server and register routes
 	serverConfig := server.InitServer(&app.ServerConfig)
 	server.SetupMiddlewares(serverConfig.Router, app)
 	server.RegisterRoutes(serverConfig)

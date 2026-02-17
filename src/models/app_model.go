@@ -1,10 +1,10 @@
 package models
 
 type App struct {
-	AppConfig     AppConfig
-	ServerConfig  ServerConfig
-	DBConfig      DBConfig
-	EmailSettings EmailSettings
+	AppConfig    AppConfig
+	ServerConfig ServerConfig
+	DBConfig     DBConfig
+	SMTPConfig   SMTPConfig
 }
 
 func (app App) IsEmpty() bool {
@@ -16,6 +16,7 @@ type AppConfig struct {
 	Version       string
 	Env           string
 	BaseDirectory string
+	BaseURL       string
 }
 
 func (appConfig AppConfig) IsEmpty() bool {

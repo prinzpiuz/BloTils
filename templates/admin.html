@@ -19,16 +19,40 @@
                 <td>{{ .Email }}</td>
                 <td>{{ .UserRole }}</td>
                 <td>{{ .UserStatus }}</td>
-                <td>
-                    {{ if .UserStatusRequested }}<a
+                <td class="actions-cell">
+                    {{ if .UserStatusRequested }}
+                    <a
                         href="/approve_account/{{.Id}}"
-                        class="action-link approve"
-                        >Approve</a
-                    >{{ end }} {{ if notCurrentAdmin .Id $.Session.User.Id }}<a
+                        class="action-icon approve-icon"
+                        title="Approve"
+                        aria-label="Approve user"
+                    >
+                        <img
+                            src="/{{$.Static}}/icons/approve.svg"
+                            alt="Approve"
+                        />
+                    </a>
+                    {{ end }}
+                    {{ if notCurrentAdmin .Id $.Session.User.Id }}
+                    <a
                         href="/delete_user/{{ .Id }}"
-                        class="action-link delete"
-                        >Delete</a
-                    >{{ end }}
+                        class="action-icon delete-icon"
+                        title="Delete"
+                        aria-label="Delete user"
+                        onclick="
+                            return confirm(
+                                'Are you sure you want to delete this user?',
+                            );
+                        "
+                    >
+                        <img
+                            src="/{{$.Static}}/icons/delete.svg"
+                            alt="Delete"
+                        />
+                    </a>
+                    {{ else}}
+                    <span class="no-actions-text">User actions are not available for the currently logged-in admin.</span>
+                    {{ end }}
                 </td>
             </tr>
             {{ end }}

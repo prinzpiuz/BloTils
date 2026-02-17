@@ -78,7 +78,9 @@ body {
     font-weight: 400;
     margin: 0;
     letter-spacing: 2px;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        opacity 0.3s ease;
     margin-bottom: -30px;
 }
 
@@ -431,7 +433,9 @@ button[type='submit']:hover {
     padding: 12px 18px;
     line-height: 1.5;
     opacity: 0.9;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        background-color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .account-creation-note strong {
@@ -511,7 +515,9 @@ button[type='submit']:hover {
     border-bottom: 1px solid #f1f1f1;
     vertical-align: middle;
     color: #444;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
 }
 
 .user-table tbody tr {
@@ -529,7 +535,9 @@ button[type='submit']:hover {
     font-weight: 500;
     padding: 4px 10px;
     border-radius: 6px;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease;
 }
 
 .action-link.approve {
@@ -586,7 +594,9 @@ button[type='submit']:hover {
     flex-direction: column;
     justify-content: space-between;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, width 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        width 0.3s ease;
     position: fixed;
     top: 0;
     bottom: 0;
@@ -636,7 +646,9 @@ button[type='submit']:hover {
     padding: 12px;
     border-radius: 6px;
     text-align: center;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease;
 }
 
 .menu-item a:hover {
@@ -713,7 +725,9 @@ button[type='submit']:hover {
     font-size: 26px;
     cursor: pointer;
     color: #742ce0;
-    transition: color 0.3s ease, transform 0.2s ease;
+    transition:
+        color 0.3s ease,
+        transform 0.2s ease;
     margin-right: 15px;
     position: absolute;
     top: 2px;
@@ -966,4 +980,310 @@ input:focus {
     outline: none;
     border-color: #742ce0;
     box-shadow: 0 0 0 3px rgba(116, 44, 224, 0.15);
+}
+
+/* Domain Detail Page */
+.domain-detail-container {
+    padding: 30px;
+    background: #fff;
+    border-radius: 16px;
+    margin: 30px auto;
+    max-width: 1000px;
+    overflow-x: auto;
+}
+
+.domain-detail-header {
+    margin-bottom: 30px;
+}
+
+.back-link {
+    color: #742ce0;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: #5b19be;
+}
+
+.domain-detail-header h2 {
+    margin: 12px 0 4px;
+    color: #2e2e2e;
+    font-weight: 600;
+    font-size: 1.6rem;
+}
+
+.likes-table .post-uri {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #333;
+    max-width: 400px;
+    word-break: break-all;
+}
+
+.likes-table .like-count {
+    font-weight: 600;
+    color: #742ce0;
+    font-size: 1.1rem;
+}
+
+.domain-title {
+    color: #742ce0 !important;
+    font-size: 1.8rem !important;
+    font-weight: 600;
+    margin: 0;
+    text-align: center;
+}
+
+.graph-toggle-btn {
+    background-color: #f0e6ff;
+    color: #742ce0;
+    border: 1px solid #d8c4f8;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    margin: 0 0 !important;
+}
+
+.graph-toggle-btn:hover {
+    background-color: #742ce0;
+    color: #fff;
+}
+
+.graph-toggle-btn.active {
+    background-color: #742ce0;
+    color: #fff;
+}
+
+.graph-row td {
+    padding: 0 !important;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.graph-container {
+    padding: 20px;
+    height: 300px;
+    background: #fafafa;
+    border-radius: 8px;
+    margin: 10px 15px 15px;
+}
+
+.graph-error,
+.graph-no-data {
+    text-align: center;
+    color: #888;
+    padding: 40px 20px;
+    font-size: 0.95rem;
+}
+
+/* Action Icons */
+.actions-cell {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.action-icon img {
+    width: 18px;
+    height: 18px;
+    opacity: 0.5;
+    transition:
+        opacity 0.2s ease,
+        filter 0.2s ease;
+}
+
+.action-icon:hover {
+    background-color: #f3f4f6;
+}
+
+.action-icon:hover img {
+    opacity: 1;
+}
+
+/* Edit - Purple on hover */
+.edit-icon:hover img {
+    filter: invert(27%) sepia(94%) saturate(2938%) hue-rotate(258deg)
+        brightness(88%) contrast(93%);
+}
+
+/* Delete - Red on hover */
+.delete-icon:hover {
+    background-color: #fef2f2;
+}
+
+.delete-icon:hover img {
+    filter: invert(31%) sepia(83%) saturate(2142%) hue-rotate(342deg)
+        brightness(87%) contrast(95%);
+}
+
+/* Approve Icon */
+.approve-icon:hover {
+    background-color: #f0fdf4;
+}
+
+.approve-icon:hover img {
+    filter: invert(52%) sepia(90%) saturate(405%) hue-rotate(93deg)
+        brightness(95%) contrast(88%);
+}
+
+/* Toast Container */
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+/* Individual Toast */
+.toast {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease-out;
+    min-width: 280px;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toast-icon {
+    font-size: 1.2rem;
+}
+
+.toast-message {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    padding: 0 0 0 12px;
+    line-height: 1;
+}
+
+.toast-close:hover {
+    opacity: 1;
+}
+
+/* Toast Types */
+.toast.success {
+    background-color: #d4edda;
+    border-left: 4px solid #28a745;
+    color: #155724;
+}
+
+.toast.error {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
+    color: #721c24;
+}
+
+.toast.warning {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    color: #856404;
+}
+
+.toast.info {
+    background-color: #d1ecf1;
+    border-left: 4px solid #17a2b8;
+    color: #0c5460;
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.toast.hiding {
+    animation: slideOut 0.3s ease-in forwards;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+    .toast-container {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+    }
+
+    .toast {
+        min-width: auto;
+    }
+}
+
+/* Version Note */
+.version-note {
+    margin-top: 12px;
+    margin-bottom: 24px;
+    padding: 12px 16px;
+    background: #fefce8;
+    border-radius: 8px;
+    color: #713f12;
+    font-size: 0.875rem;
+}
+
+.version-note code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.version-note a {
+    color: #a16207;
+    text-decoration: underline;
+}
+
+.version-note a:hover {
+    color: #854d0e;
 }

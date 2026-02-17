@@ -6,18 +6,22 @@
     </div>
     <div class="menu">
         <ul class="no-bullets">
+            {{ if .Session.User.IsAdmin }}
             <div class="menu-item">
                 <li><a href="/admin">Users</a></li>
             </div>
+            {{ end }}
             <div class="menu-item">
                 <li><a href="/domains">Domains</a></li>
             </div>
             <div class="menu-item">
                 <li><a href="#">Analytics</a></li>
             </div>
+            {{ if .Session.User.IsAdmin }}
             <div class="menu-item">
                 <li><a href="#">Settings</a></li>
             </div>
+            {{ end }}
             <div class="menu-item">
                 <li><a href="/logout">Logout</a></li>
             </div>

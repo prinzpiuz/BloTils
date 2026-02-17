@@ -4,6 +4,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 )
@@ -401,15 +402,26 @@ func GetAllUsers(db *sql.DB) []User {
 
 }
 
-// ApproveUser updates the status of a user to approved in the database
-// It takes a database connection and a user ID as parameters
-// Returns an error if the database operation fails
-func ApproveUser(db *sql.DB, userId int) error {
-	_, err := db.Exec(approveUser, userId)
+// ApproveUser approves a pending user account and returns the user's email.
+//
+// It updates the user's record with:
+// - user_role = 1 (admin)
+// - is_active = 1 (active)
+// - user_status = 1 (approved)
+//
+// The function only approves users with a current user_status of 2 (pending).
+// If the user is not found or is already approved, it returns an error indicating
+// the user was not found or already approved.
+func ApproveUser(db *sql.DB, userID int) (string, error) {
+	var email string
+	err := db.QueryRow(approveUser, userID).Scan(&email)
 	if err != nil {
-		return err
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("user not found or already approved")
+		}
+		return "", fmt.Errorf("failed to approve user: %w", err)
 	}
-	return nil
+	return email, nil
 }
 
 // DeleteUser removes a user from the database by their user ID
@@ -421,4 +433,73 @@ func DeleteUser(db *sql.DB, userId int) error {
 		return err
 	}
 	return nil
+}
+
+// GetLikesByDomainId retrieves all likes associated with a specific domain ID.
+// Returns a slice of Likes structs ordered by count descending.
+func GetLikesByDomainId(db *sql.DB, domainId int) []Likes {
+	var likesList []Likes
+	rows, err := db.Query(getLikesByDomainId, domainId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("DB: No likes found for domain ID %d", domainId)
+			return nil
+		}
+		log.Printf("Error Getting Likes for Domain %d: %v", domainId, err)
+		return nil
+	}
+	defer func() {
+		if err = rows.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+	for rows.Next() {
+		var like Likes
+		err := rows.Scan(&like.id, &like.URI, &like.domain_id, &like.Count)
+		if err != nil {
+			log.Printf("Scanning Likes Rows Failed: %v", err)
+			return nil
+		}
+		like.Domain.Id = domainId
+		likesList = append(likesList, like)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Likes Iteration Failed: %v", err)
+		return nil
+	}
+	return likesList
+}
+
+// GetLikesTimeline retrieves the likes timeline for a specific URI within a domain,
+// grouped by date, for rendering a likes-over-time graph.
+func GetLikesTimeline(db *sql.DB, domainId int, uri string) []LikesTimeline {
+	var timeline []LikesTimeline
+	rows, err := db.Query(getLikesTimeline, domainId, uri)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("DB: No timeline data for domain %d, uri %s", domainId, uri)
+			return nil
+		}
+		log.Printf("Error Getting Likes Timeline: %v", err)
+		return nil
+	}
+	defer func() {
+		if err = rows.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+	for rows.Next() {
+		var entry LikesTimeline
+		err := rows.Scan(&entry.Date, &entry.Count)
+		if err != nil {
+			log.Printf("Scanning Timeline Rows Failed: %v", err)
+			return nil
+		}
+		timeline = append(timeline, entry)
+	}
+	if err := rows.Err(); err != nil {
+		log.Printf("Timeline Iteration Failed: %v", err)
+		return nil
+	}
+	return timeline
 }

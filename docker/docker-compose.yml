@@ -1,41 +1,41 @@
 services:
   blotils:
-    image: ghcr.io/prinzpiuz/blotils:latest
+    # image: ghcr.io/prinzpiuz/blotils:latest
+    build:
+      context: ../.
+      dockerfile: docker/Dockerfile
     container_name: blotils
+    ports:
+      - 8000:8000
     networks:
       - backend
     volumes:
-      - ../../BloTils_Data/BloTils.db:/blotils/BloTils.db
-      - ../../BloTils_Data/config.json:/blotils/config.json
-    environment:
-      BT_SENDGRIDAPIKEY: ${BT_SENDGRIDAPIKEY}
-      BT_ENV: production
-      BT_DBLOCATION: /blotils/BloTils.db
+      - ../BloTils.db:/blotils/BloTils.db
+      - ../config.json:/blotils/config.json
+    env_file:
+      - ../.env
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/ping"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8000/api/v1/ping",
+        ]
       interval: 30s
       timeout: 10s
+      start_period: 5s
       retries: 3
-
-  caddy:
-    image: caddy:latest
-    container_name: caddy
-    networks:
-      - backend
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ../docker/caddy/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-    restart: unless-stopped
-
-volumes:
-  caddy_data:
-  caddy_config:
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
 
 networks:
   backend:
