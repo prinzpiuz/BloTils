@@ -1,6 +1,7 @@
 ## What's Changed in 1.0.0
-* fix: 🐛 github action fixes by @prinzpiuz
+* fix: 🐛 urls updated by @prinzpiuz
 * chore: changelog generated & version updated automatically by @github-actions[bot]
+* fix: 🐛 github action fixes by @prinzpiuz
 * feat: 🎸 sentry integrated by @prinzpiuz
 * fix: 🐛 golang linter fixes by @prinzpiuz
 * fix: 🐛 docker flow updated by @prinzpiuz
