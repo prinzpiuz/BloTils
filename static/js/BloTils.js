@@ -1,6 +1,5 @@
-// BloTils: https://www.blotils.com
-// This file is released under the ISC license: https://opensource.org/licenses/ISC
-
+// BloTils: https://www.blotils.prinzpiuz.in
+// This file is released under the GPL v3 license: https://opensource.org/license/gpl-3-0
 (function () {
     'use strict';
     if (window.blotils && window.blotils.initialized) return;
@@ -39,7 +38,9 @@
         );
 
         return {
-            baseUrl: scriptTag?.dataset.blotils_url || 'https://blotils.com',
+            baseUrl:
+                scriptTag?.dataset.blotils_url ||
+                'https://www.blotils.prinzpiuz.in',
             buttonId: btnScript?.dataset.blotils_like_btn || 'blotils_like_btn',
             countId: btnScript?.dataset.blotils_count || 'blotils_count',
         };
