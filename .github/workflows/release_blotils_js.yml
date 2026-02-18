@@ -2,8 +2,6 @@ name: Build and Release BloTils.js
 
 on:
     push:
-        tags:
-            - "*.*.*"
         branches:
             - release
         paths:
@@ -16,6 +14,24 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Get current JS version and bump
+              id: version
+              run: |
+                  # Read current version
+                  CURRENT=$(jq -r '.version' static/js/version.json)
+
+                  # Parse semver components
+                  IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+                  # Bump patch version
+                  NEW_PATCH=$((PATCH + 1))
+                  NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+                  echo "current=$CURRENT" >> $GITHUB_OUTPUT
+                  echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
@@ -41,14 +57,10 @@ jobs:
 
             - name: Generate SRI hashes
               run: |
-                  # Generate hashes for both files
                   HASH_ORIGINAL=$(cat dist/BloTils.js | openssl dgst -sha384 -binary | openssl base64 -A)
                   HASH_MINIFIED=$(cat dist/BloTils.min.js | openssl dgst -sha384 -binary | openssl base64 -A)
+                  VERSION=${{ steps.version.outputs.version }}
 
-                  # Get version from tag
-                  VERSION=${GITHUB_REF#refs/tags/}
-
-                  # Create integrity.json
                   cat > dist/integrity.json << EOF
                   {
                     "version": "${VERSION}",
@@ -63,111 +75,95 @@ jobs:
                       }
                     },
                     "jsdelivr": {
-                      "original": "https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.js",
-                      "minified": "https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.min.js"
+                      "original": "https://cdn.jsdelivr.net/gh/${{ github.repository }}@js-v${VERSION}/dist/BloTils.js",
+                      "minified": "https://cdn.jsdelivr.net/gh/${{ github.repository }}@js-v${VERSION}/dist/BloTils.min.js"
                     }
                   }
                   EOF
 
-                  cat > dist/USAGE.md << EOF
-                  # BloTils.js ${VERSION}
+                  cat > dist/USAGE.md << 'USAGE_EOF'
+                  # BloTils.js VERSION_PLACEHOLDER
 
                   ## CDN Links (jsDelivr)
 
                   ### Minified (Recommended for production)
-                  \`\`\`html
-                  <script
-                    src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.min.js"
-                    integrity="sha384-${HASH_MINIFIED}"
-                    crossorigin="anonymous"
-                    data-blotils_url="https://blotils.com/"
-                    data-blotils_like_btn="blotils_like_btn">
-                  </script>
-                  \`\`\`
+                    ```html
+                        <script
+                            src="https://cdn.jsdelivr.net/gh/REPO_PLACEHOLDER@js-vVERSION_PLACEHOLDER/dist/BloTils.min.js"
+                            integrity="HASH_MIN_PLACEHOLDER"
+                            crossorigin="anonymous"
+                            data-blotils_url="https://blotils.com/"
+                            data-blotils_like_btn="blotils_like_btn">
+                        </script>
+                    ```
 
                   ### Original (For debugging)
-                  \`\`\`html
-                  <script
-                    src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.js"
-                    integrity="sha384-${HASH_ORIGINAL}"
-                    crossorigin="anonymous"
-                    data-blotils_url="https://blotils.com/"
-                    data-blotils_like_btn="blotils_like_btn">
-                  </script>
-                  \`\`\`
+                    ```html
+                        <script
+                            src="https://cdn.jsdelivr.net/gh/REPO_PLACEHOLDER@js-vVERSION_PLACEHOLDER/dist/BloTils.js"
+                            integrity="HASH_ORIG_PLACEHOLDER"
+                            crossorigin="anonymous"
+                            data-blotils_url="https://blotils.com/"
+                            data-blotils_like_btn="blotils_like_btn">
+                        </script>
+                    ```
+                  USAGE_EOF
 
-                  ## Full Example
+                  sed -i "s|VERSION_PLACEHOLDER|${VERSION}|g" dist/USAGE.md
+                  sed -i "s|REPO_PLACEHOLDER|${{ github.repository }}|g" dist/USAGE.md
+                  sed -i "s|HASH_MIN_PLACEHOLDER|sha384-${HASH_MINIFIED}|g" dist/USAGE.md
+                  sed -i "s|HASH_ORIG_PLACEHOLDER|sha384-${HASH_ORIGINAL}|g" dist/USAGE.md
 
-                  \`\`\`html
-                  <div class="love-wrapper">
-                    <button id="blotils_like_btn" class="love-btn">❤️ Like</button>
-                    <span class="love-count" data-blotils-count>0</span>
-                  </div>
-
-                  <script
-                    src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${VERSION}/dist/BloTils.min.js"
-                    integrity="sha384-${HASH_MINIFIED}"
-                    crossorigin="anonymous"
-                    data-blotils_url="https://blotils.com/"
-                    data-blotils_like_btn="blotils_like_btn">
-                  </script>
-                  \`\`\`
-                  EOF
-
-                  # Save hashes for release notes
                   echo "HASH_ORIGINAL=sha384-${HASH_ORIGINAL}" >> $GITHUB_ENV
                   echo "HASH_MINIFIED=sha384-${HASH_MINIFIED}" >> $GITHUB_ENV
                   echo "VERSION=${VERSION}" >> $GITHUB_ENV
 
-            - name: Display build info
+            - name: Update version file and commit
               run: |
-                  echo "=== Build Complete ==="
-                  echo "Version: ${{ env.VERSION }}"
-                  echo ""
-                  echo "Files:"
-                  ls -lh dist/
-                  echo ""
-                  echo "SRI Hashes:"
-                  echo "BloTils.js:     ${{ env.HASH_ORIGINAL }}"
-                  echo "BloTils.min.js: ${{ env.HASH_MINIFIED }}"
+                  # Update version file
+                  echo '{"version": "${{ env.VERSION }}"}' > static/js/version.json
 
-            - name: Commit dist files
-              run: |
                   git config --local user.email "github-actions[bot]@users.noreply.github.com"
                   git config --local user.name "github-actions[bot]"
-                  git add dist/
-                  git commit -m "Build: ${{ env.VERSION }} - Add minified files and SRI hashes" || echo "No changes to commit"
-                  git push origin HEAD:main
+                  git add dist/ static/js/version.json
+                  git commit -m "Build: BloTils.js v${{ env.VERSION }}" || echo "No changes to commit"
+                  git push origin HEAD:release
+
+            - name: Create and push tag
+              run: |
+                  git tag "js-v${{ env.VERSION }}"
+                  git push origin "js-v${{ env.VERSION }}"
 
             - name: Create GitHub Release
-              uses: softprops/action-gh-release@v1
+              uses: softprops/action-gh-release@v2
               with:
-                  name: BloTils.js ${{ env.VERSION }}
+                  tag_name: js-v${{ env.VERSION }}
+                  name: BloTils.js v${{ env.VERSION }}
                   body: |
-                      ## 📦 BloTils.js ${{ env.VERSION }}
+                      ## BloTils.js v${{ env.VERSION }}
 
                       ### CDN Links
 
                       **Minified (Recommended):**
                       ```html
-                      <script
-                        src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/dist/BloTils.min.js"
-                        integrity="${{ env.HASH_MINIFIED }}"
-                        crossorigin="anonymous"
-                        data-blotils_url="https://blotils.com/"
-                        data-blotils_like_btn="blotils_like_btn">
-                      </script>
+                          <script
+                          src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@js-v${{ env.VERSION }}/dist/BloTils.min.js"
+                          integrity="${{ env.HASH_MINIFIED }}"
+                          crossorigin="anonymous"
+                          data-blotils_url="https://blotils.com/"
+                          data-blotils_like_btn="blotils_like_btn">
+                          </script>
                       ```
 
                       **Original:**
                       ```html
-                      <script
-                        src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ env.VERSION }}/dist/BloTils.js"
-                        integrity="${{ env.HASH_ORIGINAL }}"
-                        crossorigin="anonymous"
-                        data-blotils_url="https://blotils.com/"
-                        data-blotils_like_btn="blotils_like_btn">
-                      </script>
+                          <script
+                          src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@js-v${{ env.VERSION }}/dist/BloTils.js"
+                          integrity="${{ env.HASH_ORIGINAL }}"
+                          crossorigin="anonymous"
+                          data-blotils_url="https://blotils.com/"
+                          data-blotils_like_btn="blotils_like_btn">
+                          </script>
                       ```
 
                       ### SRI Hashes
@@ -175,7 +171,6 @@ jobs:
                       |------|----------------|
                       | `BloTils.js` | `${{ env.HASH_ORIGINAL }}` |
                       | `BloTils.min.js` | `${{ env.HASH_MINIFIED }}` |
-
                   files: |
                       dist/BloTils.js
                       dist/BloTils.min.js
