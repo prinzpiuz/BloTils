@@ -1,7 +1,7 @@
 {
     "AppConfig": {
         "Name": "BloTils",
-        "Version": "1.0.0",
+        "Version": "1.0.1",
         "Env": "dev",
         "BaseDirectory": "."
     },
