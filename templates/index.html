@@ -2,43 +2,63 @@
 {{ template "logo.html" . }}
 <div class="description-section">
   <p class="description-text">
-    BloTils empowers your static blog to do more by turning simplicity into <br>interactivity.
-    Add smart utilities, dynamic features, and seamless enhancements to your blog, all without breaking the static nature you love.
-    Without any complexties.
+    Finally, engagement tools built for static sites.<br>
+    Drop in a script, get likes, comments, and analytics.<br>
+    No databases, no server config, no nonsense.
   </p>
 </div>
+
+{{ template "github_stats.html" . }}
+
 <div class="middle-section cta-buttons">
-  <a href="/docs">Docs</a>
-  <a href="https://github.com/prinzpiuz/BloTils">Source</a>
+    <a href="https://github.com/prinzpiuz/BloTils/wiki">Docs</a>
+    <a href="https://github.com/prinzpiuz/BloTils">Source</a>
 </div>
-<div class="feature-section" id="features">
-  <h2 class="section-title">Features</h2>
-  <div class="feature-list">
-    <div class="feature">
-      <h3>Likes Counter</h3>
-      <p>Add a simple, privacy-friendly like system to your posts.</p>
+<div
+    class="feature-section"
+    id="features"
+>
+    <h2 class="section-title">Features</h2>
+    <div class="feature-list">
+        <div class="feature">
+            <h3>Likes Counter</h3>
+            <p>Add a simple, privacy-friendly like system to your posts.</p>
+            <a
+                href="/clap_counter"
+                class="feature-link"
+            >
+                <span>View Demo</span>
+                <img
+                    src="/{{.Static}}/icons/arrow_right.svg"
+                    alt=""
+                    class="feature-link__icon"
+                />
+            </a>
+        </div>
+        <div class="feature">
+            <h3>Comments</h3>
+            <p>Enable lightweight commenting without a backend setup.</p>
+        </div>
+        <div class="feature">
+            <h3>Simple Analytics</h3>
+            <p>Track essential insights — fast, private, and open source.</p>
+        </div>
+        <div class="feature">
+            <h3>Email Subscription</h3>
+            <p>
+                Collect readers' emails seamlessly for updates or newsletters.
+            </p>
+        </div>
+        <div class="feature">
+            <h3>Forms</h3>
+            <p>Create and handle forms easily, right in your static site.</p>
+        </div>
+        <div class="feature">
+            <h3>Dynamic Content</h3>
+            <p>Render live, up-to-date content without full rebuilds.</p>
+        </div>
     </div>
-    <div class="feature">
-      <h3>Comments</h3>
-      <p>Enable lightweight commenting without a backend setup.</p>
-    </div>
-    <div class="feature">
-      <h3>Simple Analytics</h3>
-      <p>Track essential insights — fast, private, and open source.</p>
-    </div>
-    <div class="feature">
-      <h3>Email Subscription</h3>
-      <p>Collect readers’ emails seamlessly for updates or newsletters.</p>
-    </div>
-    <div class="feature">
-      <h3>Forms</h3>
-      <p>Create and handle forms easily, right in your static site.</p>
-    </div>
-    <div class="feature">
-      <h3>Dynamic Content</h3>
-      <p>Render live, up-to-date content without full rebuilds.</p>
-    </div>
-  </div>
 </div>
 
+<script src="/{{.Static}}/js/github_stats.js"></script>
 {{ end }}

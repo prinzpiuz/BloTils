@@ -248,6 +248,38 @@ body {
     border-color: #d8c4f8;
 }
 
+.feature-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 8px 14px;
+    color: #742ce0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+        background 0.2s ease,
+        gap 0.2s ease;
+}
+
+.feature-link:hover {
+    background: #ede9fe;
+    gap: 10px;
+}
+
+.feature-link__icon {
+    width: 16px;
+    height: 16px;
+    filter: invert(29%) sepia(93%) saturate(1739%) hue-rotate(254deg)
+        brightness(87%) contrast(91%);
+    transition: transform 0.2s ease;
+}
+
+.feature-link:hover .feature-link__icon {
+    transform: translateX(2px);
+}
+
 @media (max-width: 768px) {
     .section-title {
         margin-bottom: 30px;
@@ -1286,4 +1318,135 @@ input:focus {
 
 .version-note a:hover {
     color: #854d0e;
+}
+
+/* GitHub Stats Badge - Add to main.css */
+
+.github-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #5b19be;
+    border-radius: 30px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+    opacity: 0;
+    transform: translateY(5px);
+    margin: 20px auto;
+    display: flex;
+    justify-content: center;
+    width: 200px;
+}
+
+.github-stats.loaded {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.github-stats:hover {
+    background: #24292e;
+    transform: translateY(-2px);
+}
+
+.github-stats__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.github-stats__icon img {
+    width: 24px;
+    height: 24px;
+    filter: invert(1); /* Makes black SVG white */
+}
+
+.github-stats__info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.github-stats__repo {
+    font-weight: 600;
+    color: #fff;
+}
+
+.github-stats__facts {
+    display: flex;
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.github-stats__fact {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #8b949e;
+    font-size: 0.75rem;
+}
+
+/* SVG icons using mask-image */
+.github-stats__fact-icon {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    background-color: #8b949e;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+.github-stats__fact-icon--tag {
+    -webkit-mask-image: url('/static/icons/tag.svg');
+    mask-image: url('/static/icons/tag.svg');
+}
+
+.github-stats__fact-icon--star {
+    -webkit-mask-image: url('/static/icons/star.svg');
+    mask-image: url('/static/icons/star.svg');
+}
+
+.github-stats__fact-icon--fork {
+    -webkit-mask-image: url('/static/icons/fork.svg');
+    mask-image: url('/static/icons/fork.svg');
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .github-stats {
+        padding: 8px 12px;
+        gap: 10px;
+    }
+
+    .github-stats__icon img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .github-stats__repo {
+        font-size: 0.8rem;
+    }
+
+    .github-stats__facts {
+        gap: 8px;
+    }
+
+    .github-stats__fact {
+        font-size: 0.7rem;
+    }
+
+    .github-stats__fact-icon {
+        width: 12px;
+        height: 12px;
+    }
 }
