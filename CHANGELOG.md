@@ -1,3 +1,11 @@
+## What's Changed in 1.0.1
+* fix: 🐛 minor fixes by @prinzpiuz
+* fix: 🐛 minor fixes and patches by @prinzpiuz
+* fix: 🐛 minor patches by @prinzpiuz
+* chore: changelog generated & version updated automatically by @github-actions[bot]
+
+**Full Changelog**: https://github.com/prinzpiuz/BloTils/compare/1.0.0...1.0.1
+
 ## What's Changed in 1.0.0
 * chore: changelog generated & version updated automatically by @github-actions[bot]
 * fix: 🐛 urls updated by @prinzpiuz
