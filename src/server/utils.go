@@ -199,33 +199,51 @@ func getPath(r *http.Request, w http.ResponseWriter) string {
 	return s.Path
 }
 
-// path_to_cookie_str returns a string representation of a cookie name based on the provided path.
-// func path_to_cookie_str(cookie_name string, path string) string {
-// 	return fmt.Sprintf("%s%s", cookie_name, strings.Join(strings.Split(path, "/"), "_"))
-// }
+// isSecureContext checks if the request is in a secure context
+// (HTTPS, localhost, or behind a trusted proxy with HTTPS)
+func isSecureContext(r *http.Request) bool {
+	// Direct HTTPS connection
+	if r.TLS != nil {
+		return true
+	}
+
+	// Behind reverse proxy with HTTPS
+	if r.Header.Get("X-Forwarded-Proto") == "https" {
+		return true
+	}
+
+	// Localhost is treated as secure by browsers
+	host := strings.Split(r.Host, ":")[0] // Remove port
+	if host == "localhost" || host == "127.0.0.1" || host == "::1" {
+		return true
+	}
+
+	return false
+}
 
 // setCookie sets an HTTP cookie with the provided name, value, and path. The cookie is set with
 // HttpOnly, Secure, and SameSite=None attributes to ensure it is only accessible by the server
 // and is transmitted securely over HTTPS.
 func setCookie(r *http.Request, w http.ResponseWriter, name string, value string, path string, httpOnly bool, expires time.Time, maxAge int, sameSitePolicy http.SameSite) {
-	var secure = false
-	appData := GetAppDataFromContext(r.Context())
-	if !appData.AppConfig.IsEmpty() {
-		secure = appData.AppConfig.IsProduction()
+
+	if path == "" {
+		path = "/"
 	}
+
 	cookie := http.Cookie{
 		Name:     name,
 		Value:    value,
 		HttpOnly: httpOnly,
-		Secure:   secure,
+		Secure:   isSecureContext(r),
 		SameSite: sameSitePolicy,
 		MaxAge:   maxAge,
+		Path:     path,
 	}
 	if !expires.IsZero() {
 		cookie.Expires = expires
 	}
-	if path != "" {
-		cookie.Path = path
+	if maxAge != 0 {
+		cookie.MaxAge = maxAge
 	}
 	http.SetCookie(w, &cookie)
 

@@ -94,9 +94,9 @@ BloTils uses a hybrid configuration system:
 
 #### Documentation
 
-- [Full Documentation](https://github.com/prinzpiuz/BloTils/wiki/BloTils-Docs)
+- [Full Documentation](https://github.com/prinzpiuz/BloTils/wiki)
 - [Docker Deployment Guide](docker/README.md)
-- [Self-Hosting Guide](https://github.com/prinzpiuz/BloTils/wiki/How-To-Deploy-Yourself)
+- [Self-Hosting Guide](https://github.com/prinzpiuz/BloTils/wiki/Self-Hosting-Guide)
 - [API Reference](https://github.com/prinzpiuz/BloTils/wiki/API-Reference)
 
 ---

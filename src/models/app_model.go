@@ -1,5 +1,20 @@
 package models
 
+var (
+	Version   = "unknown"
+	CommitSHA = "unknown"
+	BuildTime = "unknown"
+)
+var UNKNOWN = "unknown"
+
+type AppConfig struct {
+	Name          string
+	Version       string
+	Env           string
+	BaseDirectory string
+	BaseURL       string
+}
+
 type App struct {
 	AppConfig    AppConfig
 	ServerConfig ServerConfig
@@ -10,14 +25,6 @@ type App struct {
 
 func (app App) IsEmpty() bool {
 	return app == App{}
-}
-
-type AppConfig struct {
-	Name          string
-	Version       string
-	Env           string
-	BaseDirectory string
-	BaseURL       string
 }
 
 func (appConfig AppConfig) IsEmpty() bool {
