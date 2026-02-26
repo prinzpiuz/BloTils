@@ -4,6 +4,8 @@ services:
     build:
       context: ../.
       dockerfile: docker/Dockerfile
+      args:
+        - VERSION=2.0.0
     container_name: blotils
     ports:
       - 8000:8000

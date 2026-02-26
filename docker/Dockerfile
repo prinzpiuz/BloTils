@@ -13,7 +13,18 @@ RUN go mod download
 
 COPY ../ .
 
-RUN CGO_ENABLED=1 go build -ldflags "-s -w" -o /build/BloTils .
+# Build arguments
+ARG VERSION=unknown
+ARG COMMIT_SHA=unknown
+ARG BUILD_TIME=unknown
+
+# Build with embedded version info
+RUN CGO_ENABLED=1 go build \
+    -ldflags "-s -w \
+    -X BloTils/src/models.Version=${VERSION} \
+    -X BloTils/src/models.CommitSHA=${COMMIT_SHA} \
+    -X BloTils/src/models.BuildTime=${BUILD_TIME}" \
+    -o /build/BloTils .
 
 # Runtime stage
 FROM alpine:3.22

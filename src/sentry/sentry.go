@@ -114,6 +114,7 @@ func Flush(timeout time.Duration) {
 		return
 	}
 	sentry.Flush(timeout)
+	log.Println("Sentry Flushed")
 }
 
 // Recover captures panics and sends to Sentry

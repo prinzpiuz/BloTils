@@ -45,7 +45,7 @@ func InitApp(config *koanf.Koanf) *models.App {
 	app := &models.App{
 		AppConfig: models.AppConfig{
 			Name:          getConfigString(config, "NAME", "AppConfig.Name", "BloTils"),
-			Version:       getConfigString(config, "VERSION", "AppConfig.Version", "dev"),
+			Version:       getVersion(config),
 			Env:           getConfigString(config, "ENV", "AppConfig.Env", "dev"),
 			BaseURL:       getConfigString(config, "BASE_URL", "AppConfig.BaseURL", "http://localhost:8000"),
 			BaseDirectory: getBaseDir(),

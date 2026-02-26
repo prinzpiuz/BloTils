@@ -23,7 +23,8 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		msg = "Database Not Found"
 	}
-	responseBody := map[string]string{"message": msg}
+	appData := GetAppDataFromContext(r.Context())
+	responseBody := map[string]string{"message": msg, "version": appData.AppConfig.Version}
 	jsonData, err := json.Marshal(responseBody)
 	if err != nil {
 		log.Printf("Error Encoding JSON: %v", err.Error())

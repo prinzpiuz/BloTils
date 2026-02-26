@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function fetchAndRenderChart(canvas, domainId, uri) {
-        const url = `/api/v1/domain/${domainId}/likes_timeline?uri=${encodeURIComponent(uri)}`;
+        const url = `/domain/${domainId}/likes_timeline?uri=${encodeURIComponent(uri)}`;
 
         fetch(url)
             .then((response) => {
