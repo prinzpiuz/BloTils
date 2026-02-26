@@ -156,3 +156,11 @@ func getBaseDir() string {
 func getDBBaseDir() string {
 	return fp.Join(getBaseDir(), "src/db")
 }
+
+func getVersion(config *koanf.Koanf) string {
+	version := models.Version
+	if version == models.UNKNOWN {
+		version = getConfigString(config, "VERSION", "AppConfig.Version", "dev")
+	}
+	return version
+}
