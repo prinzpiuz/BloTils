@@ -221,11 +221,6 @@ func isSecureContext(r *http.Request) bool {
 	return false
 }
 
-// path_to_cookie_str returns a string representation of a cookie name based on the provided path.
-// func path_to_cookie_str(cookie_name string, path string) string {
-// 	return fmt.Sprintf("%s%s", cookie_name, strings.Join(strings.Split(path, "/"), "_"))
-// }
-
 // setCookie sets an HTTP cookie with the provided name, value, and path. The cookie is set with
 // HttpOnly, Secure, and SameSite=None attributes to ensure it is only accessible by the server
 // and is transmitted securely over HTTPS.
@@ -242,6 +237,7 @@ func setCookie(r *http.Request, w http.ResponseWriter, name string, value string
 		Secure:   isSecureContext(r),
 		SameSite: sameSitePolicy,
 		MaxAge:   maxAge,
+		Path:     path,
 	}
 	if !expires.IsZero() {
 		cookie.Expires = expires

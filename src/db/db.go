@@ -48,13 +48,13 @@ func InitDB(config *models.DBConfig) error {
 
 	// Verify connection is working
 	if err = db.Ping(); err != nil {
-		db.Close()
+		CloseDB()
 		return fmt.Errorf("database not responding: %w", err)
 	}
 
 	// Run migrations
 	if err = runMigrations(db, config.MigrationFiles); err != nil {
-		db.Close()
+		CloseDB()
 		return fmt.Errorf("migration failed: %w", err)
 	}
 
