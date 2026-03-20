@@ -1,4 +1,13 @@
+## What's Changed in 1.0.3
+* chore: linting fix by @prinzpiuz
+* chore: checks no need to run in release branch by @prinzpiuz
+* fix: minor fixes and improvements by @prinzpiuz
+* fix: fixed issue with add/delete domain, flow improved by @prinzpiuz
+
+**Full Changelog**: https://github.com/prinzpiuz/BloTils/compare/1.0.2...1.0.3
+
 ## What's Changed in 1.0.2
+* chore: changelog generated & version updated automatically by @github-actions[bot]
 * chore: release notes added by @prinzpiuz
 
 **Full Changelog**: https://github.com/prinzpiuz/BloTils/compare/1.0.1...1.0.2
