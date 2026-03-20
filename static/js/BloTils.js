@@ -1,4 +1,4 @@
-// BloTils: https://www.blotils.prinzpiuz.in
+// BloTils: https://blotils.prinzpiuz.in
 // This file is released under the GPL v3 license: https://opensource.org/license/gpl-3-0
 (function () {
     'use strict';
@@ -11,8 +11,6 @@
     const CONFIG = {
         countUrl: 'api/v1/count_like',
         debounceDelay: 300,
-        animationDuration: 1000,
-        floatingHeartsCount: 5,
     };
 
     // State
@@ -23,11 +21,16 @@
         hasError: false,
     };
 
+    // Expose count directly on window.blotils
+    Object.defineProperty(window.blotils, 'count', {
+        get: () => state.count,
+        enumerable: true,
+    });
+
     // DOM Elements (initialized later)
     let elements = {
         button: null,
-        countDisplay: null,
-        heartIcon: null,
+        countDisplays: [], // Changed to array for multiple elements
     };
 
     // Get configuration from script tag
@@ -40,7 +43,7 @@
         return {
             baseUrl:
                 scriptTag?.dataset.blotils_url ||
-                'https://www.blotils.prinzpiuz.in',
+                'https://blotils.prinzpiuz.in',
             buttonId: btnScript?.dataset.blotils_like_btn || 'blotils_like_btn',
             countId: btnScript?.dataset.blotils_count || 'blotils_count',
         };
@@ -83,16 +86,12 @@
             return false;
         }
 
-        // Find or create count display
-        elements.countDisplay =
-            document.getElementById(config.countId) ||
-            elements.button.parentElement?.querySelector(
-                '.blotils-count, .love-count, [data-blotils-count]',
-            );
-
-        // Find heart icon if exists
-        elements.heartIcon = elements.button.querySelector(
-            '.heart-icon, svg, .blotils-icon',
+        // Find all count display elements
+        elements.countDisplays = Array.from(
+            document.querySelectorAll(
+                '[data-blotils-count], .blotils-count, .love-count, #' +
+                    config.countId,
+            ),
         );
 
         return true;
@@ -108,15 +107,10 @@
         elements.button.classList.toggle('error', state.hasError);
         elements.button.disabled = state.isLoading;
 
-        // Update count display
-        if (elements.countDisplay) {
-            elements.countDisplay.textContent = state.count;
-
-            // Trigger count animation
-            elements.countDisplay.classList.remove('bump');
-            void elements.countDisplay.offsetWidth; // Force reflow
-            elements.countDisplay.classList.add('bump');
-        }
+        // Update all count displays
+        elements.countDisplays.forEach((el) => {
+            el.textContent = state.count;
+        });
 
         // Update aria attributes for accessibility
         elements.button.setAttribute('aria-pressed', state.isLiked);
@@ -126,43 +120,6 @@
                 ? `Liked. ${state.count} likes`
                 : `Like this. ${state.count} likes`,
         );
-    }
-
-    // Create floating hearts animation
-    function createFloatingHearts() {
-        if (!elements.button) return;
-
-        const hearts = ['❤️', '💕', '💗', '💖', '💓'];
-
-        for (let i = 0; i < CONFIG.floatingHeartsCount; i++) {
-            setTimeout(() => {
-                const heart = document.createElement('span');
-                heart.className = 'blotils-floating-heart';
-                heart.textContent =
-                    hearts[Math.floor(Math.random() * hearts.length)];
-                heart.style.cssText = `
-                    position: absolute;
-                    pointer-events: none;
-                    font-size: 20px;
-                    left: ${15 + Math.random() * 25}px;
-                    top: ${5 + Math.random() * 15}px;
-                    animation: blotilsFloatUp ${CONFIG.animationDuration}ms ease-out forwards;
-                `;
-
-                elements.button.appendChild(heart);
-
-                setTimeout(() => heart.remove(), CONFIG.animationDuration);
-            }, i * 80);
-        }
-    }
-
-    // Trigger heart pop animation
-    function triggerHeartPop() {
-        if (!elements.heartIcon) return;
-
-        elements.heartIcon.style.animation = 'none';
-        void elements.heartIcon.offsetWidth; // Force reflow
-        elements.heartIcon.style.animation = 'blotilsHeartPop 0.4s ease';
     }
 
     // API: Get current like count
@@ -185,7 +142,7 @@
             const data = await response.json();
 
             state.count = data.count || 0;
-            state.isLiked = false; // Will be determined by server in future
+            state.isLiked = false;
             state.hasError = false;
 
             return data;
@@ -201,7 +158,6 @@
 
     // API: Submit a like
     window.blotils.count_like = async function () {
-        // Prevent duplicate requests
         if (state.isLoading) return;
 
         state.isLoading = true;
@@ -224,12 +180,7 @@
             if (data.success) {
                 state.isLiked = true;
                 state.count = data.count || state.count + 1;
-
-                // Trigger animations
-                triggerHeartPop();
-                createFloatingHearts();
             } else {
-                // Handle "already liked" or other non-success responses
                 if (data.message === 'Clap Already Counted') {
                     state.isLiked = true;
                     state.count = data.count || state.count;
@@ -252,68 +203,9 @@
         await window.blotils.count_like();
     }, CONFIG.debounceDelay);
 
-    // Inject required CSS animations
-    function injectStyles() {
-        if (document.getElementById('blotils-styles')) return;
-
-        const styles = document.createElement('style');
-        styles.id = 'blotils-styles';
-        styles.textContent = `
-            @keyframes blotilsHeartPop {
-                0% { transform: scale(1); }
-                25% { transform: scale(1.3); }
-                50% { transform: scale(0.9); }
-                75% { transform: scale(1.1); }
-                100% { transform: scale(1); }
-            }
-
-            @keyframes blotilsFloatUp {
-                0% {
-                    opacity: 1;
-                    transform: translateY(0) scale(1);
-                }
-                100% {
-                    opacity: 0;
-                    transform: translateY(-80px) scale(0.5);
-                }
-            }
-
-            @keyframes blotilsCountBump {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.3); color: #e53935; }
-                100% { transform: scale(1); }
-            }
-
-            .blotils-count.bump,
-            .love-count.bump,
-            [data-blotils-count].bump {
-                animation: blotilsCountBump 0.3s ease;
-            }
-
-            [id*="blotils"].loading {
-                opacity: 0.7;
-                pointer-events: none;
-            }
-
-            [id*="blotils"].error {
-                animation: blotilsShake 0.4s ease;
-            }
-
-            @keyframes blotilsShake {
-                0%, 100% { transform: translateX(0); }
-                25% { transform: translateX(-5px); }
-                75% { transform: translateX(5px); }
-            }
-        `;
-        document.head.appendChild(styles);
-    }
-
     // Initialize when DOM is ready
     function init() {
-        injectStyles();
-
         if (!initElements()) {
-            // Retry once after a short delay (for async loaded content)
             setTimeout(() => {
                 if (initElements()) {
                     setupEventListeners();
@@ -330,11 +222,9 @@
     function setupEventListeners() {
         if (!elements.button) return;
 
-        // Remove any existing listeners (in case of re-init)
         elements.button.removeEventListener('click', handleClick);
         elements.button.addEventListener('click', handleClick);
 
-        // Store reference for external access
         window.blotils.like_button = elements.button;
     }
 

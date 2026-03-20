@@ -94,7 +94,7 @@ func CSRFMiddleware(next http.Handler) http.Handler {
 		if slices.Contains(allowedMethods, r.Method) && !strings.Contains(r.URL.Path, "api") {
 			var expectedToken string
 
-			cookie, err := r.Cookie("csrfToken")
+			cookie, err := r.Cookie(CSRFCookie)
 			if err != nil {
 				msg := "Error: CSRF token missing"
 				log.Println(msg)
@@ -103,7 +103,7 @@ func CSRFMiddleware(next http.Handler) http.Handler {
 			}
 			expectedToken = cookie.Value
 
-			actualToken := r.FormValue("csrfToken")
+			actualToken := r.FormValue(CSRFCookie)
 			if actualToken != expectedToken {
 				msg := "Error: CSRF token mismatch"
 				log.Println(msg)

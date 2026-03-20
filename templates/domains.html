@@ -13,30 +13,30 @@
     <table class="user-table">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>#</th>
                 <th>Domain</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            {{ range .Data.domains }}
+            {{ range $index, $domain := .Data.domains }}
             <tr>
-                <td>{{ .Id }}</td>
+                <td>{{ add $index 1 }}</td>
                 <td>
                     <a
-                        href="domain/{{.Id}}"
+                        href="domain/{{$domain.Id}}"
                         class="domain-link"
-                        >{{ .Domain }}</a
+                        >{{ $domain.Domain }}</a
                     >
                 </td>
                 <td class="actions-cell">
                     <a
                         href="#"
                         class="action-icon edit-icon edit-domain"
-                        data-id="{{.Id}}"
-                        data-domain="{{.Domain}}"
-                        data-likes="{{.LikesEnabled}}"
-                        data-comments="{{.CommentsEnabled}}"
+                        data-id="{{$domain.Id}}"
+                        data-domain="{{$domain.Domain}}"
+                        data-likes="{{$domain.LikesEnabled}}"
+                        data-comments="{{$domain.CommentsEnabled}}"
                         title="Edit"
                         aria-label="Edit domain"
                     >
@@ -45,22 +45,33 @@
                             alt="Edit"
                         />
                     </a>
-                    <a
-                        href="delete_domain/{{.Id}}"
-                        class="action-icon delete-icon"
-                        title="Delete"
-                        aria-label="Delete domain"
-                        onclick="
+                    <form
+                        action="/delete_domain/{{$domain.Id}}"
+                        method="POST"
+                        class="delete-form"
+                        onsubmit="
                             return confirm(
                                 'Are you sure you want to delete this domain?',
                             );
                         "
                     >
-                        <img
-                            src="/{{$.Static}}/icons/delete.svg"
-                            alt="Delete"
+                        <input
+                            type="hidden"
+                            name="csrfToken"
+                            value="{{$.CSRFToken}}"
                         />
-                    </a>
+                        <button
+                            type="submit"
+                            class="action-icon delete-icon"
+                            title="Delete"
+                            aria-label="Delete domain"
+                        >
+                            <img
+                                src="/{{$.Static}}/icons/delete.svg"
+                                alt="Delete"
+                            />
+                        </button>
+                    </form>
                 </td>
             </tr>
             {{ end }}

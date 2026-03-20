@@ -1,0 +1,17 @@
+DROP TABLE IF EXISTS Liked_IPs;
+CREATE TABLE Liked_IPs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip VARCHAR(255) UNIQUE,
+    count INTEGER CHECK(count >= 0),
+    domain VARCHAR(255),
+    path TEXT,
+    created_time DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+DROP TABLE IF EXISTS Likes;
+CREATE TABLE Likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    uri TEXT UNIQUE,
+    count INTEGER CHECK(count >= 0),
+    domain_id INTEGER,
+    FOREIGN KEY (domain_id) REFERENCES Domain(id)
+);

@@ -4,9 +4,15 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"time"
+)
+
+var (
+	ErrDomainExists   = errors.New("domain already exists")
+	ErrDomainNotFound = errors.New("domain not found")
 )
 
 // GetDomain retrieves a Domain from the database by the given domain_name.
@@ -35,7 +41,7 @@ func GetDomain(db *sql.DB, domainName string) Domain {
 
 // GetDomainById retrieves a Domain from the database by the given domain ID.
 // If the domain is not found, it returns an empty Domain.
-func GetDomainById(db *sql.DB, domainId int) Domain {
+func GetDomainById(db *sql.DB, domainId int) (*Domain, error) {
 	var domain Domain
 	err := db.QueryRow(getDomainById, domainId).Scan(
 		&domain.Id,
@@ -49,12 +55,12 @@ func GetDomainById(db *sql.DB, domainId int) Domain {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			log.Printf("DB: Domain %d, Not Found", domainId)
-			return Domain{}
+			return nil, ErrDomainNotFound
 		}
 		log.Printf("Error Getting Domain %d: %v", domainId, err)
-		return Domain{}
+		return nil, fmt.Errorf("failed to get domain by ID: %w", err)
 	}
-	return domain
+	return &domain, nil
 }
 
 // GetAllUserDomains retrieves all domains associated with a specific user from the database.
@@ -103,34 +109,83 @@ func GetAllUserDomains(db *sql.DB, userID int) []Domain {
 	return domains
 }
 
-func DeleteDomain(db *sql.DB, domainId int) error {
-	_, err := db.Exec(deleteDomain, domainId)
-	if err != nil {
-		return err
+// DeleteDomain deletes a domain and all related data in a transaction
+func DeleteDomain(db *sql.DB, domainID int, userID int) error {
+	conn := GetDB()
+	if conn == nil {
+		return errors.New("database not connected")
 	}
+
+	// Verify domain exists and belongs to user
+	domain, err := GetDomainById(db, domainID)
+	if err != nil {
+		if errors.Is(err, ErrDomainNotFound) {
+			return ErrDomainNotFound
+		}
+		return fmt.Errorf("failed to verify domain ownership: %w", err)
+	}
+
+	// Start transaction
+	tx, err := conn.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			err := tx.Rollback()
+			if err != nil {
+				log.Printf("Error rolling back transaction: %v", err)
+			}
+		}
+	}()
+
+	// 1. Delete related Likes
+	_, err = tx.Exec(deleteLikesByDomainID, domainID)
+	if err != nil {
+		return fmt.Errorf("failed to delete likes: %w", err)
+	}
+
+	// 2. Delete related Liked_IPs (by domain name)
+	_, err = tx.Exec(deleteLikedIPsByDomain, domain.Domain)
+	if err != nil {
+		return fmt.Errorf("failed to delete liked IPs: %w", err)
+	}
+
+	// 3. Delete the domain
+	_, err = tx.Exec(deleteDomainByID, domainID)
+	if err != nil {
+		return fmt.Errorf("failed to delete domain: %w", err)
+	}
+
+	// 4. Delete domain settings
+	_, err = tx.Exec(deleteDomainSettingsByID, domain.Settings.Id)
+	if err != nil {
+		return fmt.Errorf("failed to delete domain settings: %w", err)
+	}
+
+	// Commit transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	log.Printf("Domain '%s' (ID: %d) deleted successfully", domain.Domain, domainID)
 	return nil
 }
 
-// GetLikes retrieves the likes information for a specific page within a given domain from the database.
-// If no likes are found for the specified page and domain, it returns an empty Likes struct.
-// Returns a Likes struct containing details such as like count, URI, and domain information.
-func GetLikes(db *sql.DB, domainName string, page string) Likes {
+// GetLikes retrieves the like count for a specific page
+func GetLikes(db *sql.DB, domain string, uri string) Likes {
 	var likes Likes
-	err := db.QueryRow(getLikes, domainName, page).Scan(
+	err := db.QueryRow(getLikes, uri, domain).Scan(
 		&likes.id,
 		&likes.URI,
-		&likes.domain_id,
 		&likes.Count,
-		&likes.Domain.Id,
-		&likes.Domain.Settings.Id,
-		&likes.Domain.Domain,
-		&likes.Domain.timestamp)
+		&likes.domain_id,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("DB: Likes On %s, Not Found In %s", page, domainName)
 			return Likes{}
 		}
-		log.Printf("Error Getting Likes On %s For %s: %v", page, domainName, err)
+		log.Printf("Error getting likes for %s on %s: %v", uri, domain, err)
 		return Likes{}
 	}
 	return likes
@@ -159,31 +214,88 @@ func GetLikedIP(db *sql.DB, domain string, page string, ip string) LikedIPs {
 	return likedIP
 }
 
-// UpdateIPLikeCount updates or inserts the like count for a specific IP address within a given domain and page.
-// It executes a database query to record the IP's interaction and logs any errors encountered during the process.
-func UpdateIPLikeCount(db *sql.DB, domain string, path string, ip string) {
-	_, err := db.Exec(updateOrInsertLikedIP, domain, path, ip)
+// UpdateIPLikeCount records that an IP has liked a specific page
+func UpdateIPLikeCount(db *sql.DB, domain string, path string, ip string) error {
+	_, err := db.Exec(updateOrInsertLikedIP, ip, domain, path)
 	if err != nil {
-		log.Printf("Error Updating IP Like Count: %v", err)
+		log.Printf("Error updating IP like count: %v", err)
+		return err
 	}
-
+	return nil
 }
 
-// UpdateLikeCount updates the like count for a specific page within a given domain.
-// It executes a database query to increment or update the like count and returns any error encountered during the process.
-// The function takes a database connection, page identifier, and domain ID as parameters.
-func UpdateLikeCount(db *sql.DB, page string, doamin_id int) error {
-	_, err := db.Exec(updateLike, page, doamin_id)
-	return err
+// UpdateLikeCount increments the like count for a specific page within a domain
+func UpdateLikeCount(db *sql.DB, uri string, domainID int) error {
+	_, err := db.Exec(updateLike, uri, domainID)
+	if err != nil {
+		log.Printf("Error updating like count for %s (domain %d): %v", uri, domainID, err)
+		return err
+	}
+	return nil
 }
 
-// AddDomainAndSettings adds a new domain to the database with specified likes and comments settings.
-// It executes a database query to insert the domain and its configuration, logging any errors encountered during the process.
-func AddDomainAndSettings(db *sql.DB, domain *Domain) {
-	_, err := db.Exec(addDomainAndSettings, domain.Settings.likes, domain.Settings.comments, domain.User.Id, domain.Domain)
+// DomainExists checks if a domain already exists
+func DomainExists(db *sql.DB, domainName string) (bool, error) {
+
+	var count int
+	err := db.QueryRow(domainExists, domainName).Scan(&count)
 	if err != nil {
-		log.Printf("Error Adding Domain %s: %v", domain.Domain, err)
+		return false, err
 	}
+
+	return count > 0, nil
+}
+
+// AddDomainAndSettings inserts a domain and its settings in a transaction
+func AddDomainAndSettings(db *sql.DB, domain *Domain) error {
+
+	// Check if domain already exists
+	exists, err := DomainExists(db, domain.Domain)
+	if err != nil {
+		return fmt.Errorf("failed to check domain existence: %w", err)
+	}
+	if exists {
+		return ErrDomainExists
+	}
+
+	// Start transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			err := tx.Rollback()
+			if err != nil {
+				log.Printf("Error rolling back transaction: %v", err)
+			}
+		}
+	}()
+
+	// Insert domain settings
+	result, err := tx.Exec(insertDomainSettings, domain.Settings.likes, domain.Settings.comments)
+	if err != nil {
+		return fmt.Errorf("failed to insert domain settings: %w", err)
+	}
+
+	settingsID, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("failed to get settings ID: %w", err)
+	}
+
+	// Insert domain
+	_, err = tx.Exec(insertDomain, settingsID, domain.User.Id, domain.Domain)
+	if err != nil {
+		return fmt.Errorf("failed to insert domain: %w", err)
+	}
+
+	// Commit transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	log.Printf("Domain '%s' added successfully for user %d", domain.Domain, domain.User.Id)
+	return nil
 }
 
 func UpdateDomainDetails(db *sql.DB, domain *Domain) {
