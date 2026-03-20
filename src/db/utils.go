@@ -132,7 +132,10 @@ func DeleteDomain(db *sql.DB, domainID int, userID int) error {
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				log.Printf("Error rolling back transaction: %v", err)
+			}
 		}
 	}()
 
@@ -262,7 +265,10 @@ func AddDomainAndSettings(db *sql.DB, domain *Domain) error {
 	}
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			err := tx.Rollback()
+			if err != nil {
+				log.Printf("Error rolling back transaction: %v", err)
+			}
 		}
 	}()
 
