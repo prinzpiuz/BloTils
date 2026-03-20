@@ -5,7 +5,7 @@
     <table class="user-table">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>#</th>
                 <th>Email</th>
                 <th>Role</th>
                 <th>Status</th>
@@ -13,16 +13,16 @@
             </tr>
         </thead>
         <tbody>
-            {{ range .Data.users }}
+            {{ range $index, $user := .Data.users }}
             <tr>
-                <td>{{ .Id }}</td>
-                <td>{{ .Email }}</td>
-                <td>{{ .UserRole }}</td>
-                <td>{{ .UserStatus }}</td>
+                <td>{{ add $index 1 }}</td>
+                <td>{{ $user.Email }}</td>
+                <td>{{ $user.UserRole }}</td>
+                <td>{{ $user.UserStatus }}</td>
                 <td class="actions-cell">
-                    {{ if .UserStatusRequested }}
-                    <a
-                        href="/approve_account/{{.Id}}"
+                    {{ if $user.UserStatusRequested }}
+
+                        href="/approve_account/{{$user.Id}}"
                         class="action-icon approve-icon"
                         title="Approve"
                         aria-label="Approve user"
@@ -33,9 +33,9 @@
                         />
                     </a>
                     {{ end }}
-                    {{ if notCurrentAdmin .Id $.Session.User.Id }}
-                    <a
-                        href="/delete_user/{{ .Id }}"
+                    {{ if notCurrentAdmin $user.Id $.Session.User.Id }}
+
+                        href="/delete_user/{{ $user.Id }}"
                         class="action-icon delete-icon"
                         title="Delete"
                         aria-label="Delete user"
@@ -50,7 +50,7 @@
                             alt="Delete"
                         />
                     </a>
-                    {{ else}}
+                    {{ else }}
                     <span class="no-actions-text">User actions are not available for the currently logged-in admin.</span>
                     {{ end }}
                 </td>

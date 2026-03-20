@@ -15,6 +15,83 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
+const testDomain = "example.com"
+
+// Helper function to create mock DB with cleanup function
+func newMockDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock, func()) {
+	t.Helper()
+	mockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("failed to create mock database: %v", err)
+	}
+	cleanup := func() {
+		_ = mockDB.Close()
+	}
+	return mockDB, mock, cleanup
+}
+
+// Helper function to setup common domain query expectation
+func expectDomainQuery(mock sqlmock.Sqlmock) {
+	mock.ExpectQuery(`SELECT d\.id, d\.settings_id, d\.domain, d\.created_time, ds\.id, ds\.likes, ds\.comments, ds\.created_time FROM Domain d JOIN DomainSettings ds ON d\.id = ds\.id WHERE d\.domain = \?`).
+		WithArgs(testDomain).
+		WillReturnRows(
+			sqlmock.NewRows([]string{
+				"id", "settings_id", "domain", "created_time",
+				"id", "likes", "comments", "created_time",
+			}).AddRow(
+				1, 1, testDomain,
+				time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC),
+				1, 1, 0,
+				time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC),
+			))
+}
+
+// Helper for GetLikedIP query
+func expectGetLikedIPQuery(mock sqlmock.Sqlmock, ip, path string, found bool) {
+	query := mock.ExpectQuery(`SELECT \* FROM Liked_IPs\s+WHERE Liked_IPs\.ip = \?\s+AND Liked_IPs\.domain = \?\s+AND Liked_IPs\.path = \?`).
+		WithArgs(ip, testDomain, path)
+
+	if found {
+		query.WillReturnRows(
+			sqlmock.NewRows([]string{"id", "ip", "count", "domain", "path", "created_time"}).
+				AddRow(1, ip, 1, testDomain, path, time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)),
+		)
+	} else {
+		query.WillReturnError(sql.ErrNoRows)
+	}
+}
+
+// Helper for UpdateLikeCount query
+func expectUpdateLikeQuery(mock sqlmock.Sqlmock, uri string, domainID int) {
+	mock.ExpectExec(`INSERT INTO Likes \(uri, domain_id, count, created_time\)\s+VALUES \(\?, \?, 1, datetime\(\)\)\s+ON CONFLICT\(uri, domain_id\)\s+DO UPDATE SET count = count \+ 1`).
+		WithArgs(uri, domainID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+}
+
+// Helper for UpdateIPLikeCount query
+func expectUpdateIPLikeQuery(mock sqlmock.Sqlmock, ip, path string) {
+	mock.ExpectExec(`INSERT INTO Liked_IPs \(ip, domain, path, count, created_time\)\s+VALUES \(\?, \?, \?, 1, datetime\(\)\)\s+ON CONFLICT\(ip, domain, path\)\s+DO UPDATE SET count = count \+ 1`).
+		WithArgs(ip, testDomain, path).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+}
+
+// Helper for GetLikes query
+func expectGetLikesQuery(mock sqlmock.Sqlmock, uri string, count int) {
+	mock.ExpectQuery(`SELECT id, uri, count, domain_id FROM Likes WHERE uri = \? AND domain_id = \(SELECT id FROM Domain WHERE domain = \?\)`).
+		WithArgs(uri, testDomain).
+		WillReturnRows(
+			sqlmock.NewRows([]string{"id", "uri", "count", "domain_id"}).
+				AddRow(1, uri, count, 1),
+		)
+}
+
+// Helper for GetLikes returning no rows
+func expectGetLikesQueryNoRows(mock sqlmock.Sqlmock, uri string) {
+	mock.ExpectQuery(`SELECT id, uri, count, domain_id FROM Likes WHERE uri = \? AND domain_id = \(SELECT id FROM Domain WHERE domain = \?\)`).
+		WithArgs(uri, testDomain).
+		WillReturnError(sql.ErrNoRows)
+}
+
 func TestGetClaps(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -25,6 +102,7 @@ func TestGetClaps(t *testing.T) {
 		expectedStatus int
 		expectedCount  int
 		expectedOK     bool
+		setupMock      func(sqlmock.Sqlmock)
 	}{
 		{
 			name:           "GET request success",
@@ -35,6 +113,10 @@ func TestGetClaps(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedCount:  0,
 			expectedOK:     true,
+			setupMock: func(mock sqlmock.Sqlmock) {
+				expectDomainQuery(mock)
+				expectGetLikesQueryNoRows(mock, "/blog/post")
+			},
 		},
 		{
 			name:           "POST request invalid content type",
@@ -45,6 +127,9 @@ func TestGetClaps(t *testing.T) {
 			expectedStatus: http.StatusUnsupportedMediaType,
 			expectedCount:  0,
 			expectedOK:     false,
+			setupMock: func(mock sqlmock.Sqlmock) {
+				// No DB calls expected
+			},
 		},
 		{
 			name:           "Missing referer",
@@ -55,47 +140,27 @@ func TestGetClaps(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 			expectedCount:  0,
 			expectedOK:     false,
+			setupMock: func(mock sqlmock.Sqlmock) {
+				// No DB calls expected
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var mockDB *sql.DB
-			var mock sqlmock.Sqlmock
-			var err error
-			var req *http.Request
-			mockDB, mock, err = sqlmock.New()
-			if err != nil {
-				t.Fatalf("failed to create mock database in test %s : %v", t.Name(), err)
-			}
+			mockDB, mock, cleanup := newMockDB(t)
+			defer cleanup()
+
 			test_setup.App.DBConfig.Connection = mockDB
-			req = httptest.NewRequest(tt.method, tt.url, nil)
+
+			req := httptest.NewRequest(tt.method, tt.url, nil)
 			ctx := context.WithValue(req.Context(), server.AppContext, *test_setup.App)
 			req = req.WithContext(ctx)
 			req.Header.Set("Content-Type", tt.contentType)
 			req.Header.Set("Referer", tt.referer)
-			const expectedQuery = `SELECT d.id, d.settings_id, d.domain, d.created_time, ds.id, ds.likes, ds.comments, ds.created_time FROM Domain d JOIN DomainSettings ds ON d.id = ds.id WHERE d.domain = ?`
-			mock.ExpectQuery(expectedQuery).
-				WithArgs("example.com").
-				WillReturnRows(
-					sqlmock.NewRows([]string{
-						"id",
-						"settings_id",
-						"domain",
-						"created_time",
-						"id",
-						"likes",
-						"comments",
-						"created_time",
-					}).AddRow(
-						1,
-						1,
-						"example.com",
-						time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC),
-						1,
-						1,
-						0,
-						time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)))
+
+			tt.setupMock(mock)
+
 			w := httptest.NewRecorder()
 			server.GetClaps(w, req)
 
@@ -113,21 +178,21 @@ func TestGetClaps(t *testing.T) {
 				if response.Count != tt.expectedCount {
 					t.Errorf("expected count %d, got %d", tt.expectedCount, response.Count)
 				}
+			}
 
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Errorf("unfulfilled expectations: %s", err)
 			}
 		})
 	}
 }
 
 func TestGetClapsWithBody(t *testing.T) {
-	var mockDB *sql.DB
-	var mock sqlmock.Sqlmock
-	var err error
-	mockDB, mock, err = sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create mock database in test %s : %v", t.Name(), err)
-	}
+	mockDB, mock, cleanup := newMockDB(t)
+	defer cleanup()
+
 	test_setup.App.DBConfig.Connection = mockDB
+
 	body := strings.NewReader(`{"page": "/blog/post"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/count_like", body)
 	ctx := context.WithValue(req.Context(), server.AppContext, *test_setup.App)
@@ -135,82 +200,11 @@ func TestGetClapsWithBody(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Referer", "https://example.com/")
 
-	// 1. First expectation: Domain query (checkForDomain)
-	expectedQuery := `SELECT d.id, d.settings_id, d.domain, d.created_time, ds.id, ds.likes, ds.comments, ds.created_time FROM Domain d JOIN DomainSettings ds ON d.id = ds.id WHERE d.domain = ?`
-	mock.ExpectQuery(expectedQuery).
-		WithArgs("example.com").
-		WillReturnRows(
-			sqlmock.NewRows([]string{
-				"id",
-				"settings_id",
-				"domain",
-				"created_time",
-				"id",
-				"likes",
-				"comments",
-				"created_time",
-			}).AddRow(
-				1,
-				1,
-				"example.com",
-				time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC),
-				1,
-				1,
-				0,
-				time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)))
-
-	// 2. Second expectation: Check if IP already liked (hasAlreadyLikedIP -> GetLikedIP)
-	// Note: extractClientIP strips the port, so "192.0.2.1:1234" becomes "192.0.2.1"
-	mock.ExpectQuery(
-		`^SELECT \* FROM Liked_IPs\s+WHERE Liked_IPs\.ip = \?\s+AND Liked_IPs\.domain = \?\s+AND Liked_IPs\.path = \?$`,
-	).WithArgs("192.0.2.1", "example.com", "/blog/post").WillReturnError(sql.ErrNoRows)
-
-	// 3. Third expectation: Update like count (UpdateLikeCount)
-	mock.ExpectExec(
-		`^INSERT INTO Likes\(uri, count, domain_id\)\s+`+
-			`VALUES \(\?, 1, \?\)\s+`+
-			`ON CONFLICT\(uri\)\s+`+
-			`DO UPDATE\s+`+
-			`SET count = count \+ 1$`,
-	).WithArgs("/blog/post", 1). // uri, domain_id
-					WillReturnResult(sqlmock.NewResult(1, 1))
-
-	// 4. Fourth expectation: Record IP like (UpdateIPLikeCount)
-	mock.ExpectExec(
-		`^INSERT INTO Liked_IPs\(domain, path, ip, count, created_time\)\s+`+
-			`VALUES\(\?, \?, \?, 1, datetime\(\)\)\s+`+
-			`ON CONFLICT\(ip\)\s+`+
-			`DO UPDATE\s+`+
-			`SET count = count \+ 1$`,
-	).WithArgs("example.com", "/blog/post", "192.0.2.1").
-		WillReturnResult(sqlmock.NewResult(0, 1))
-
-	// 5. Fifth expectation: Get updated likes count (GetLikes)
-	mockRows := sqlmock.NewRows([]string{
-		"Likes.id",
-		"Likes.uri",
-		"Likes.domain_id",
-		"Likes.count",
-		"Domain.id",
-		"Domain.settings_id",
-		"Domain.domain",
-		"Domain.created_time",
-	}).AddRow(
-		1,             // Likes.id
-		"/blog/post",  // Likes.uri
-		1,             // Likes.domain_id
-		1,             // Likes.count (incremented)
-		1,             // Domain.id
-		1,             // Domain.settings_id
-		"example.com", // Domain.domain
-		time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC), // Domain.created_time
-	)
-	mock.ExpectQuery(
-		`^SELECT\s+Likes\.id,\s+Likes\.uri,\s+Likes\.domain_id,\s+Likes\.count,\s+Domain\.id,\s+Domain\.settings_id,\s+Domain\.domain,\s+Domain\.created_time\s+`+
-			`FROM\s+Likes\s+JOIN Domain ON Likes\.domain_id = Domain\.id\s+`+
-			`WHERE\s+Domain\.domain = \?\s+AND Likes\.uri = \?$`,
-	).WithArgs("example.com", "/blog/post").
-		WillReturnRows(mockRows)
+	expectDomainQuery(mock)
+	expectGetLikedIPQuery(mock, "192.0.2.1", "/blog/post", false)
+	expectUpdateLikeQuery(mock, "/blog/post", 1)
+	expectUpdateIPLikeQuery(mock, "192.0.2.1", "/blog/post")
+	expectGetLikesQuery(mock, "/blog/post", 1)
 
 	w := httptest.NewRecorder()
 	server.GetClaps(w, req)
@@ -220,33 +214,34 @@ func TestGetClapsWithBody(t *testing.T) {
 	}
 
 	var response server.ClapResponse
-	err = json.NewDecoder(w.Body).Decode(&response)
+	err := json.NewDecoder(w.Body).Decode(&response)
 	if err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if response.URL != "example.com" {
-		t.Errorf("expected example.com, got %s", response.URL)
+	if response.Domain != testDomain {
+		t.Errorf("expected %s, got %s", testDomain, response.Domain)
 	}
 
 	if !response.Success {
-		t.Errorf("Request Not Succesfull")
+		t.Errorf("Request not successful")
 	}
 
 	if response.Message != "Clap Counted Successfully" {
-		t.Errorf("Message Is Not Expected")
+		t.Errorf("Message is not expected, got: %s", response.Message)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled expectations: %s", err)
 	}
 }
 
 func TestGetClapsWithBodyForAlreadyLiked(t *testing.T) {
-	var mockDB *sql.DB
-	var mock sqlmock.Sqlmock
-	var err error
-	mockDB, mock, err = sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create mock database in test %s : %v", t.Name(), err)
-	}
+	mockDB, mock, cleanup := newMockDB(t)
+	defer cleanup()
+
 	test_setup.App.DBConfig.Connection = mockDB
+
 	body := strings.NewReader(`{"page": "/blog/post"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/count_like", body)
 	ctx := context.WithValue(req.Context(), server.AppContext, *test_setup.App)
@@ -254,80 +249,9 @@ func TestGetClapsWithBodyForAlreadyLiked(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Referer", "https://example.com/")
 
-	// 1. First expectation: Domain query (checkForDomain)
-	expectedQuery := `SELECT d.id, d.settings_id, d.domain, d.created_time, ds.id, ds.likes, ds.comments, ds.created_time FROM Domain d JOIN DomainSettings ds ON d.id = ds.id WHERE d.domain = ?`
-	mock.ExpectQuery(expectedQuery).
-		WithArgs("example.com").
-		WillReturnRows(
-			sqlmock.NewRows([]string{
-				"id",
-				"settings_id",
-				"domain",
-				"created_time",
-				"id",
-				"likes",
-				"comments",
-				"created_time",
-			}).AddRow(
-				1,
-				1,
-				"example.com",
-				time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC),
-				1,
-				1,
-				0,
-				time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC)))
-
-	// 2. Second expectation: Check if IP already liked (hasAlreadyLikedIP -> GetLikedIP)
-	// Returns a row indicating IP has already liked this page
-	// Note: extractClientIP strips the port, so "192.0.2.1:1234" becomes "192.0.2.1"
-	likedIPscolumns := []string{
-		"id",
-		"ip",         // Liked_IPs.ip
-		"count",      // Liked_IPs.count
-		"domain",     // Liked_IPs.domain
-		"path",       // Liked_IPs.path
-		"created_at", // Liked_IPs.created_at (timestamp)
-	}
-	likedipMockRows := sqlmock.NewRows(likedIPscolumns).
-		AddRow(
-			1,
-			"192.0.2.1",
-			1,
-			"example.com",
-			"/blog/post",
-			time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC),
-		)
-	mock.ExpectQuery(
-		`^SELECT \* FROM Liked_IPs\s+WHERE Liked_IPs\.ip = \?\s+AND Liked_IPs\.domain = \?\s+AND Liked_IPs\.path = \?$`,
-	).WithArgs("192.0.2.1", "example.com", "/blog/post").WillReturnRows(likedipMockRows)
-
-	// 3. Third expectation: Get current likes count (GetLikes) - called when already liked
-	mockRows := sqlmock.NewRows([]string{
-		"Likes.id",
-		"Likes.uri",
-		"Likes.domain_id",
-		"Likes.count",
-		"Domain.id",
-		"Domain.settings_id",
-		"Domain.domain",
-		"Domain.created_time",
-	}).AddRow(
-		1,             // Likes.id
-		"/blog/post",  // Likes.uri
-		1,             // Likes.domain_id
-		5,             // Likes.count (existing count)
-		1,             // Domain.id
-		1,             // Domain.settings_id
-		"example.com", // Domain.domain
-		time.Date(2023, time.January, 1, 0, 0, 0, 0, time.UTC), // Domain.created_time
-	)
-	mock.ExpectQuery(
-		`^SELECT\s+Likes\.id,\s+Likes\.uri,\s+Likes\.domain_id,\s+Likes\.count,\s+Domain\.id,\s+Domain\.settings_id,\s+Domain\.domain,\s+Domain\.created_time\s+`+
-			`FROM\s+Likes\s+JOIN Domain ON Likes\.domain_id = Domain\.id\s+`+
-			`WHERE\s+Domain\.domain = \?\s+AND Likes\.uri = \?$`,
-	).WithArgs("example.com", "/blog/post").
-		WillReturnRows(mockRows)
+	expectDomainQuery(mock)
+	expectGetLikedIPQuery(mock, "192.0.2.1", "/blog/post", true)
+	expectGetLikesQuery(mock, "/blog/post", 5)
 
 	w := httptest.NewRecorder()
 	server.GetClaps(w, req)
@@ -337,20 +261,73 @@ func TestGetClapsWithBodyForAlreadyLiked(t *testing.T) {
 	}
 
 	var response server.ClapResponse
-	err = json.NewDecoder(w.Body).Decode(&response)
+	err := json.NewDecoder(w.Body).Decode(&response)
 	if err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
 
-	if response.URL != "example.com" {
-		t.Errorf("expected example.com, got %s", response.URL)
+	if response.Domain != testDomain {
+		t.Errorf("expected %s, got %s", testDomain, response.Domain)
 	}
 
 	if response.Success {
-		t.Errorf("Like Counted For Already Liked IP")
+		t.Errorf("Like should not be counted for already liked IP")
 	}
 
 	if response.Message != "Clap Already Counted" {
-		t.Errorf("Message Is Not Expected")
+		t.Errorf("Message is not expected, got: %s", response.Message)
+	}
+
+	if response.Count != 5 {
+		t.Errorf("expected count 5, got %d", response.Count)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled expectations: %s", err)
+	}
+}
+
+func TestGetClapsNewLikeNoExistingRecord(t *testing.T) {
+	mockDB, mock, cleanup := newMockDB(t)
+	defer cleanup()
+
+	test_setup.App.DBConfig.Connection = mockDB
+
+	body := strings.NewReader(`{"page": "/blog/new-post"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/count_like", body)
+	ctx := context.WithValue(req.Context(), server.AppContext, *test_setup.App)
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Referer", "https://example.com/")
+
+	expectDomainQuery(mock)
+	expectGetLikedIPQuery(mock, "192.0.2.1", "/blog/new-post", false)
+	expectUpdateLikeQuery(mock, "/blog/new-post", 1)
+	expectUpdateIPLikeQuery(mock, "192.0.2.1", "/blog/new-post")
+	expectGetLikesQuery(mock, "/blog/new-post", 1)
+
+	w := httptest.NewRecorder()
+	server.GetClaps(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", w.Code)
+	}
+
+	var response server.ClapResponse
+	err := json.NewDecoder(w.Body).Decode(&response)
+	if err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if !response.Success {
+		t.Errorf("Request should be successful")
+	}
+
+	if response.Count != 1 {
+		t.Errorf("expected count 1, got %d", response.Count)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("unfulfilled expectations: %s", err)
 	}
 }

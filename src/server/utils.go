@@ -322,6 +322,7 @@ func generateHTML(w http.ResponseWriter, data TemplateData, filenames ...string)
 	files = addCommonFiles(files)
 	funcs := template.FuncMap{
 		"notCurrentAdmin": notCurrentAdmin,
+		"add":             add,
 	}
 	tmpl := template.New("").Funcs(funcs)
 	templates := template.Must(tmpl.ParseFiles(files...))
@@ -374,8 +375,12 @@ func generateSecureToken() string {
 
 // New CSRF token generation
 func generateCSRFToken(r *http.Request, w http.ResponseWriter) string {
+	if cookie, err := r.Cookie(CSRFCookie); err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+
 	csrfToken := generateSecureToken()
-	setCookie(r, w, CSRFCookie, csrfToken, "", true, time.Now().Add(CSRFExpiry), 0, http.SameSiteStrictMode)
+	setCookie(r, w, CSRFCookie, csrfToken, "", true, time.Now().Add(CSRFExpiry), 0, http.SameSiteLaxMode)
 	return csrfToken
 }
 

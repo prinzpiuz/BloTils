@@ -135,7 +135,7 @@ func RegisterRoutes(s *models.Server) {
 	setRoute(s, RouteDetails{
 		Path:          "/delete_domain/{domain_id}",
 		Handler:       DeleteDomain,
-		Methods:       []string{http.MethodGet},
+		Methods:       []string{http.MethodPost},
 		AdminRequired: false,
 		LoginRequired: true,
 		DynamicRoute:  true,

@@ -19,6 +19,9 @@ const getDomain = `SELECT
 				   WHERE
 					 d.domain = ?`
 
+// Check if domain exists
+const domainExists = `SELECT COUNT(*) FROM Domain WHERE domain = ?`
+
 // getDomainById is a SQL query that selects all rows from the Domain and DomainSettings tables
 // where the id column in the Domain table matches the provided parameter.
 // The query joins the two tables on the id column, retrieving domain details and settings.
@@ -58,30 +61,24 @@ const getAllUserDomains = `SELECT
 					   	 d.created_time
 					   DESC`
 
-// deleteDomain is a SQL query that deletes a specific domain from the Domain table
-// based on the provided domain ID. It removes the entire domain record matching
-// the given identifier.
-const deleteDomain = `DELETE FROM Domain WHERE id = ?`
+// Delete related likes first
+const deleteLikesByDomainID = `DELETE FROM Likes WHERE domain_id = ?`
 
-// getLikes is a SQL query that selects all rows from the Likes table
-// where the uri matches the provided value, and the domain matches the
-// provided domain. It joins the Likes table with the Domain table to
-// retrieve the domain information.
-const getLikes = `SELECT
-				   Likes.id,
-				   Likes.uri,
-				   Likes.domain_id,
-				   Likes.count,
-				   Domain.id,
-				   Domain.settings_id,
-				   Domain.domain,
-				   Domain.created_time
-				 FROM
-				   Likes
-				 JOIN Domain ON Likes.domain_id = Domain.id
-				 WHERE
-				  Domain.domain = ?
-				 AND Likes.uri = ?`
+// Delete related liked IPs by domain name
+const deleteLikedIPsByDomain = `DELETE FROM Liked_IPs WHERE domain = ?`
+
+// Delete domain
+const deleteDomainByID = `DELETE FROM Domain WHERE id = ?`
+
+// Delete domain settings
+const deleteDomainSettingsByID = `DELETE FROM DomainSettings WHERE id = ?`
+
+const getLikes = `
+    SELECT id, uri, count, domain_id
+    FROM Likes
+    WHERE uri = ?
+    AND domain_id = (SELECT id FROM Domain WHERE domain = ?)
+`
 
 // getIPlikedOrNot is a SQL query that selects all rows from the Liked_IPs table
 // where the ip, path, and domain columns match the provided parameters. This query
@@ -92,35 +89,33 @@ const getIPlikedOrNot = `SELECT * FROM Liked_IPs
 						 AND Liked_IPs.domain = ?
 						 AND Liked_IPs.path = ?`
 
-// updateOrInsertLikedIP is a SQL query that inserts a new row into the Liked_IPs table
-// with the provided IP address, an initial count of 1, and the current timestamp. If a
-// row already exists for the provided IP address, the query updates the existing row by
-// incrementing the Count column by 1.
-const updateOrInsertLikedIP = `INSERT INTO Liked_IPs(domain, path, ip, count, created_time)
-							   VALUES(?, ?, ?, 1, datetime())
-							   ON CONFLICT(ip)
-							   DO UPDATE
-							   SET count = count + 1`
+// updateOrInsertLikedIP inserts or updates like count for a specific IP, domain, and path
+const updateOrInsertLikedIP = `
+    INSERT INTO Liked_IPs (ip, domain, path, count, created_time)
+    VALUES (?, ?, ?, 1, datetime())
+    ON CONFLICT(ip, domain, path)
+    DO UPDATE SET count = count + 1
+`
 
-// updateLike is a SQL query that inserts a new row into the Likes table with the provided uri and domain_id,
-// and an initial count of 1. If a row already exists for the provided uri and domain_id, the query updates
-// the existing row by incrementing the count column by 1.
-const updateLike = `INSERT INTO Likes(uri, count, domain_id)
-					VALUES (?, 1, ?)
-					ON CONFLICT(uri)
-					DO UPDATE
-					SET count = count + 1`
+// updateLike inserts or updates like count for a specific uri and domain
+const updateLike = `
+    INSERT INTO Likes (uri, domain_id, count, created_time)
+    VALUES (?, ?, 1, datetime())
+    ON CONFLICT(uri, domain_id)
+    DO UPDATE SET count = count + 1
+`
 
-// addDomainAndSettings is a SQL transaction that atomically inserts a new domain and its associated settings.
-// It first creates a record in the DomainSettings table with likes, comments, and a timestamp,
-// then uses the last inserted row ID to create a corresponding Domain record with the settings ID,
-// domain name, and timestamp. The transaction ensures that both insertions are completed successfully.
-const addDomainAndSettings = `BEGIN TRANSACTION;
-							  INSERT INTO DomainSettings (likes, comments, created_time)
-							  VALUES (?, ?, datetime());
-							  INSERT INTO Domain (settings_id, user_id, domain, created_time)
-							  VALUES (last_insert_rowid(), ?, ?, datetime());
-							  COMMIT TRANSACTION;`
+// Insert domain settings and return the ID
+const insertDomainSettings = `
+    INSERT INTO DomainSettings (likes, comments, created_time)
+    VALUES (?, ?, datetime())
+`
+
+// Insert domain with settings_id reference
+const insertDomain = `
+    INSERT INTO Domain (settings_id, user_id, domain, created_time)
+    VALUES (?, ?, ?, datetime())
+`
 
 const updateDomainDetails = `BEGIN TRANSACTION;
 							 UPDATE Domain
