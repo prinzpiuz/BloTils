@@ -67,37 +67,18 @@ const deleteLikesByDomainID = `DELETE FROM Likes WHERE domain_id = ?`
 // Delete related liked IPs by domain name
 const deleteLikedIPsByDomain = `DELETE FROM Liked_IPs WHERE domain = ?`
 
-// Get domain name before deletion (for cleaning up Liked_IPs)
-const getDomainNameByID = `SELECT domain FROM Domain WHERE id = ?`
-
-// Get settings_id before deletion
-const getSettingsIDByDomainID = `SELECT settings_id FROM Domain WHERE id = ?`
-
 // Delete domain
 const deleteDomainByID = `DELETE FROM Domain WHERE id = ?`
 
 // Delete domain settings
 const deleteDomainSettingsByID = `DELETE FROM DomainSettings WHERE id = ?`
 
-// getLikes is a SQL query that selects all rows from the Likes table
-// where the uri matches the provided value, and the domain matches the
-// provided domain. It joins the Likes table with the Domain table to
-// retrieve the domain information.
-const getLikes = `SELECT
-				   Likes.id,
-				   Likes.uri,
-				   Likes.domain_id,
-				   Likes.count,
-				   Domain.id,
-				   Domain.settings_id,
-				   Domain.domain,
-				   Domain.created_time
-				 FROM
-				   Likes
-				 JOIN Domain ON Likes.domain_id = Domain.id
-				 WHERE
-				  Domain.domain = ?
-				 AND Likes.uri = ?`
+const getLikes = `
+    SELECT id, uri, count, domain_id
+    FROM Likes
+    WHERE uri = ?
+    AND domain_id = (SELECT id FROM Domain WHERE domain = ?)
+`
 
 // getIPlikedOrNot is a SQL query that selects all rows from the Liked_IPs table
 // where the ip, path, and domain columns match the provided parameters. This query
@@ -108,24 +89,21 @@ const getIPlikedOrNot = `SELECT * FROM Liked_IPs
 						 AND Liked_IPs.domain = ?
 						 AND Liked_IPs.path = ?`
 
-// updateOrInsertLikedIP is a SQL query that inserts a new row into the Liked_IPs table
-// with the provided IP address, an initial count of 1, and the current timestamp. If a
-// row already exists for the provided IP address, the query updates the existing row by
-// incrementing the Count column by 1.
-const updateOrInsertLikedIP = `INSERT INTO Liked_IPs(domain, path, ip, count, created_time)
-							   VALUES(?, ?, ?, 1, datetime())
-							   ON CONFLICT(ip)
-							   DO UPDATE
-							   SET count = count + 1`
+// updateOrInsertLikedIP inserts or updates like count for a specific IP, domain, and path
+const updateOrInsertLikedIP = `
+    INSERT INTO Liked_IPs (ip, domain, path, count, created_time)
+    VALUES (?, ?, ?, 1, datetime())
+    ON CONFLICT(ip, domain, path)
+    DO UPDATE SET count = count + 1
+`
 
-// updateLike is a SQL query that inserts a new row into the Likes table with the provided uri and domain_id,
-// and an initial count of 1. If a row already exists for the provided uri and domain_id, the query updates
-// the existing row by incrementing the count column by 1.
-const updateLike = `INSERT INTO Likes(uri, count, domain_id)
-					VALUES (?, 1, ?)
-					ON CONFLICT(uri)
-					DO UPDATE
-					SET count = count + 1`
+// updateLike inserts or updates like count for a specific uri and domain
+const updateLike = `
+    INSERT INTO Likes (uri, domain_id, count, created_time)
+    VALUES (?, ?, 1, datetime())
+    ON CONFLICT(uri, domain_id)
+    DO UPDATE SET count = count + 1
+`
 
 // Insert domain settings and return the ID
 const insertDomainSettings = `

@@ -92,7 +92,7 @@ jobs:
                             src="https://cdn.jsdelivr.net/gh/REPO_PLACEHOLDER@js-vVERSION_PLACEHOLDER/dist/BloTils.min.js"
                             integrity="HASH_MIN_PLACEHOLDER"
                             crossorigin="anonymous"
-                            data-blotils_url="https://www.blotils.prinzpiuz.in"
+                            data-blotils_url="https://blotils.prinzpiuz.in"
                             data-blotils_like_btn="blotils_like_btn">
                         </script>
                     ```
@@ -103,7 +103,7 @@ jobs:
                             src="https://cdn.jsdelivr.net/gh/REPO_PLACEHOLDER@js-vVERSION_PLACEHOLDER/dist/BloTils.js"
                             integrity="HASH_ORIG_PLACEHOLDER"
                             crossorigin="anonymous"
-                            data-blotils_url="https://www.blotils.prinzpiuz.in"
+                            data-blotils_url="https://blotils.prinzpiuz.in"
                             data-blotils_like_btn="blotils_like_btn">
                         </script>
                     ```

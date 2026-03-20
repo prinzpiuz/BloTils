@@ -169,26 +169,20 @@ func DeleteDomain(db *sql.DB, domainID int, userID int) error {
 	return nil
 }
 
-// GetLikes retrieves the likes information for a specific page within a given domain from the database.
-// If no likes are found for the specified page and domain, it returns an empty Likes struct.
-// Returns a Likes struct containing details such as like count, URI, and domain information.
-func GetLikes(db *sql.DB, domainName string, page string) Likes {
+// GetLikes retrieves the like count for a specific page
+func GetLikes(db *sql.DB, domain string, uri string) Likes {
 	var likes Likes
-	err := db.QueryRow(getLikes, domainName, page).Scan(
+	err := db.QueryRow(getLikes, uri, domain).Scan(
 		&likes.id,
 		&likes.URI,
-		&likes.domain_id,
 		&likes.Count,
-		&likes.Domain.Id,
-		&likes.Domain.Settings.Id,
-		&likes.Domain.Domain,
-		&likes.Domain.timestamp)
+		&likes.domain_id,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("DB: Likes On %s, Not Found In %s", page, domainName)
 			return Likes{}
 		}
-		log.Printf("Error Getting Likes On %s For %s: %v", page, domainName, err)
+		log.Printf("Error getting likes for %s on %s: %v", uri, domain, err)
 		return Likes{}
 	}
 	return likes
@@ -217,22 +211,24 @@ func GetLikedIP(db *sql.DB, domain string, page string, ip string) LikedIPs {
 	return likedIP
 }
 
-// UpdateIPLikeCount updates or inserts the like count for a specific IP address within a given domain and page.
-// It executes a database query to record the IP's interaction and logs any errors encountered during the process.
-func UpdateIPLikeCount(db *sql.DB, domain string, path string, ip string) {
-	_, err := db.Exec(updateOrInsertLikedIP, domain, path, ip)
+// UpdateIPLikeCount records that an IP has liked a specific page
+func UpdateIPLikeCount(db *sql.DB, domain string, path string, ip string) error {
+	_, err := db.Exec(updateOrInsertLikedIP, ip, domain, path)
 	if err != nil {
-		log.Printf("Error Updating IP Like Count: %v", err)
+		log.Printf("Error updating IP like count: %v", err)
+		return err
 	}
-
+	return nil
 }
 
-// UpdateLikeCount updates the like count for a specific page within a given domain.
-// It executes a database query to increment or update the like count and returns any error encountered during the process.
-// The function takes a database connection, page identifier, and domain ID as parameters.
-func UpdateLikeCount(db *sql.DB, page string, doamin_id int) error {
-	_, err := db.Exec(updateLike, page, doamin_id)
-	return err
+// UpdateLikeCount increments the like count for a specific page within a domain
+func UpdateLikeCount(db *sql.DB, uri string, domainID int) error {
+	_, err := db.Exec(updateLike, uri, domainID)
+	if err != nil {
+		log.Printf("Error updating like count for %s (domain %d): %v", uri, domainID, err)
+		return err
+	}
+	return nil
 }
 
 // DomainExists checks if a domain already exists

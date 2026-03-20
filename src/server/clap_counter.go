@@ -27,7 +27,7 @@ const (
 // ClapResponse represents the JSON response for clap counter operations.
 // Separating request and response structs follows the single responsibility principle.
 type ClapResponse struct {
-	URL     string `json:"url"`
+	Domain  string `json:"domain"`
 	Message string `json:"message"`
 	Count   int    `json:"count"`
 	Success bool   `json:"success"`
@@ -42,7 +42,7 @@ type ClapRequest struct {
 // clapContext holds all the contextual data needed for processing a clap request.
 // This reduces parameter passing and makes the code more maintainable.
 type clapContext struct {
-	url        string
+	domain     string
 	page       string
 	remoteAddr string
 	dbConn     *sql.DB
@@ -58,7 +58,7 @@ func newClapContext(r *http.Request, w http.ResponseWriter) (*clapContext, error
 
 	ctx := &clapContext{
 		remoteAddr: extractClientIP(r),
-		url:        getDomain(r.Referer()),
+		domain:     getDomain(r.Referer()),
 		dbConn:     dbConn,
 	}
 
@@ -130,15 +130,15 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 
 	// Validate page is present
 	if ctx.page == "" {
-		writeErrorResponse(w, http.StatusBadRequest, msgInvalidRequest, ctx.url, "")
+		writeErrorResponse(w, http.StatusBadRequest, msgInvalidRequest, ctx.domain, "")
 		return
 	}
 
 	// Verify domain is configured
-	domain, err := checkForDomain(r, ctx.url, clapContext{})
+	domain, err := checkForDomain(r, ctx.domain, clapContext{})
 	if err != nil {
-		log.Printf("[%s] Domain check failed for %s: %v", clapCounterHandler, ctx.url, err)
-		writeErrorResponse(w, http.StatusForbidden, msgDomainNotFound, ctx.url, ctx.page)
+		log.Printf("[%s] Domain check failed for %s: %v", clapCounterHandler, ctx.domain, err)
+		writeErrorResponse(w, http.StatusForbidden, msgDomainNotFound, ctx.domain, ctx.page)
 		return
 	}
 
@@ -155,10 +155,10 @@ func GetClaps(w http.ResponseWriter, r *http.Request) {
 
 // handleGetClaps processes GET requests to retrieve the current clap count.
 func handleGetClaps(w http.ResponseWriter, ctx *clapContext) {
-	likes := db.GetLikes(ctx.dbConn, ctx.url, ctx.page)
+	likes := db.GetLikes(ctx.dbConn, ctx.domain, ctx.page)
 
 	writeJSONResponse(w, http.StatusOK, ClapResponse{
-		URL:     ctx.url,
+		Domain:  ctx.domain,
 		Page:    ctx.page,
 		Message: msgClapCount,
 		Count:   likes.Count,
@@ -170,9 +170,9 @@ func handleGetClaps(w http.ResponseWriter, ctx *clapContext) {
 func handlePostClap(w http.ResponseWriter, ctx *clapContext, domainID int) {
 	// Check if already liked
 	if hasAlreadyLikedIP(ctx) {
-		likes := db.GetLikes(ctx.dbConn, ctx.url, ctx.page)
+		likes := db.GetLikes(ctx.dbConn, ctx.domain, ctx.page)
 		writeJSONResponse(w, http.StatusOK, ClapResponse{
-			URL:     ctx.url,
+			Domain:  ctx.domain,
 			Page:    ctx.page,
 			Message: msgClapAlreadyCounted,
 			Count:   likes.Count,
@@ -184,9 +184,9 @@ func handlePostClap(w http.ResponseWriter, ctx *clapContext, domainID int) {
 	// Add the like
 	if err := db.UpdateLikeCount(ctx.dbConn, ctx.page, domainID); err != nil {
 		log.Printf("[%s] Error updating like count: %v", clapCounterHandler, err)
-		likes := db.GetLikes(ctx.dbConn, ctx.url, ctx.page)
+		likes := db.GetLikes(ctx.dbConn, ctx.domain, ctx.page)
 		writeJSONResponse(w, http.StatusInternalServerError, ClapResponse{
-			URL:     ctx.url,
+			Domain:  ctx.domain,
 			Page:    ctx.page,
 			Message: msgClapCountedFailed,
 			Count:   likes.Count,
@@ -196,13 +196,24 @@ func handlePostClap(w http.ResponseWriter, ctx *clapContext, domainID int) {
 	}
 
 	// Record the IP to prevent duplicate likes
-	db.UpdateIPLikeCount(ctx.dbConn, ctx.url, ctx.page, ctx.remoteAddr)
+	if err := db.UpdateIPLikeCount(ctx.dbConn, ctx.domain, ctx.page, ctx.remoteAddr); err != nil {
+		log.Printf("[%s] Error updating IP like count: %v", clapCounterHandler, err)
+		likes := db.GetLikes(ctx.dbConn, ctx.domain, ctx.page)
+		writeJSONResponse(w, http.StatusInternalServerError, ClapResponse{
+			Domain:  ctx.domain,
+			Page:    ctx.page,
+			Message: msgClapCountedFailed,
+			Count:   likes.Count,
+			Success: false,
+		})
+		return
+	}
 
 	// Get updated count
-	likes := db.GetLikes(ctx.dbConn, ctx.url, ctx.page)
+	likes := db.GetLikes(ctx.dbConn, ctx.domain, ctx.page)
 
 	writeJSONResponse(w, http.StatusOK, ClapResponse{
-		URL:     ctx.url,
+		Domain:  ctx.domain,
 		Page:    ctx.page,
 		Message: msgClapCountedSuccess,
 		Count:   likes.Count,
@@ -212,7 +223,7 @@ func handlePostClap(w http.ResponseWriter, ctx *clapContext, domainID int) {
 
 // hasAlreadyLikedIP checks if the IP has already liked this page.
 func hasAlreadyLikedIP(ctx *clapContext) bool {
-	likedIP := db.GetLikedIP(ctx.dbConn, ctx.url, ctx.page, ctx.remoteAddr)
+	likedIP := db.GetLikedIP(ctx.dbConn, ctx.domain, ctx.page, ctx.remoteAddr)
 	return !likedIP.IsEmpty()
 }
 
@@ -227,9 +238,9 @@ func writeJSONResponse(w http.ResponseWriter, statusCode int, response ClapRespo
 }
 
 // writeErrorResponse is a helper for writing error responses.
-func writeErrorResponse(w http.ResponseWriter, statusCode int, message, url, page string) {
+func writeErrorResponse(w http.ResponseWriter, statusCode int, message, domain, page string) {
 	writeJSONResponse(w, statusCode, ClapResponse{
-		URL:     url,
+		Domain:  domain,
 		Page:    page,
 		Message: message,
 		Count:   0,

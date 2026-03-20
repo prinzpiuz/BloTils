@@ -322,6 +322,7 @@ func generateHTML(w http.ResponseWriter, data TemplateData, filenames ...string)
 	files = addCommonFiles(files)
 	funcs := template.FuncMap{
 		"notCurrentAdmin": notCurrentAdmin,
+		"add":             add,
 	}
 	tmpl := template.New("").Funcs(funcs)
 	templates := template.Must(tmpl.ParseFiles(files...))
