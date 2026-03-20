@@ -45,22 +45,33 @@
                             alt="Edit"
                         />
                     </a>
-                    <a
-                        href="delete_domain/{{.Id}}"
-                        class="action-icon delete-icon"
-                        title="Delete"
-                        aria-label="Delete domain"
-                        onclick="
+                    <form
+                        action="/delete_domain/{{.Id}}"
+                        method="POST"
+                        class="delete-form"
+                        onsubmit="
                             return confirm(
                                 'Are you sure you want to delete this domain?',
                             );
                         "
                     >
-                        <img
-                            src="/{{$.Static}}/icons/delete.svg"
-                            alt="Delete"
+                        <input
+                            type="hidden"
+                            name="csrfToken"
+                            value="{{$.CSRFToken}}"
                         />
-                    </a>
+                        <button
+                            type="submit"
+                            class="action-icon delete-icon"
+                            title="Delete"
+                            aria-label="Delete domain"
+                        >
+                            <img
+                                src="/{{$.Static}}/icons/delete.svg"
+                                alt="Delete"
+                            />
+                        </button>
+                    </form>
                 </td>
             </tr>
             {{ end }}

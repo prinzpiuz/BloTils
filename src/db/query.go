@@ -19,6 +19,9 @@ const getDomain = `SELECT
 				   WHERE
 					 d.domain = ?`
 
+// Check if domain exists
+const domainExists = `SELECT COUNT(*) FROM Domain WHERE domain = ?`
+
 // getDomainById is a SQL query that selects all rows from the Domain and DomainSettings tables
 // where the id column in the Domain table matches the provided parameter.
 // The query joins the two tables on the id column, retrieving domain details and settings.
@@ -58,10 +61,23 @@ const getAllUserDomains = `SELECT
 					   	 d.created_time
 					   DESC`
 
-// deleteDomain is a SQL query that deletes a specific domain from the Domain table
-// based on the provided domain ID. It removes the entire domain record matching
-// the given identifier.
-const deleteDomain = `DELETE FROM Domain WHERE id = ?`
+// Delete related likes first
+const deleteLikesByDomainID = `DELETE FROM Likes WHERE domain_id = ?`
+
+// Delete related liked IPs by domain name
+const deleteLikedIPsByDomain = `DELETE FROM Liked_IPs WHERE domain = ?`
+
+// Get domain name before deletion (for cleaning up Liked_IPs)
+const getDomainNameByID = `SELECT domain FROM Domain WHERE id = ?`
+
+// Get settings_id before deletion
+const getSettingsIDByDomainID = `SELECT settings_id FROM Domain WHERE id = ?`
+
+// Delete domain
+const deleteDomainByID = `DELETE FROM Domain WHERE id = ?`
+
+// Delete domain settings
+const deleteDomainSettingsByID = `DELETE FROM DomainSettings WHERE id = ?`
 
 // getLikes is a SQL query that selects all rows from the Likes table
 // where the uri matches the provided value, and the domain matches the
@@ -111,16 +127,17 @@ const updateLike = `INSERT INTO Likes(uri, count, domain_id)
 					DO UPDATE
 					SET count = count + 1`
 
-// addDomainAndSettings is a SQL transaction that atomically inserts a new domain and its associated settings.
-// It first creates a record in the DomainSettings table with likes, comments, and a timestamp,
-// then uses the last inserted row ID to create a corresponding Domain record with the settings ID,
-// domain name, and timestamp. The transaction ensures that both insertions are completed successfully.
-const addDomainAndSettings = `BEGIN TRANSACTION;
-							  INSERT INTO DomainSettings (likes, comments, created_time)
-							  VALUES (?, ?, datetime());
-							  INSERT INTO Domain (settings_id, user_id, domain, created_time)
-							  VALUES (last_insert_rowid(), ?, ?, datetime());
-							  COMMIT TRANSACTION;`
+// Insert domain settings and return the ID
+const insertDomainSettings = `
+    INSERT INTO DomainSettings (likes, comments, created_time)
+    VALUES (?, ?, datetime())
+`
+
+// Insert domain with settings_id reference
+const insertDomain = `
+    INSERT INTO Domain (settings_id, user_id, domain, created_time)
+    VALUES (?, ?, ?, datetime())
+`
 
 const updateDomainDetails = `BEGIN TRANSACTION;
 							 UPDATE Domain
