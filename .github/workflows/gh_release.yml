@@ -16,6 +16,7 @@ jobs:
               uses: actions/checkout@v4
               with:
                   ref: ${{ github.event.workflow_run.head_branch }}
+                  fetch-depth: 0
 
             - name: Get version from config.json
               id: version
@@ -23,10 +24,19 @@ jobs:
                   VERSION=$(jq -r '.AppConfig.Version' config.json)
                   echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+            - name: Generate release notes
+              uses: orhun/git-cliff-action@main
+              id: release-notes
+              with:
+                  config: cliff.toml
+                  args: --latest --strip header
+              env:
+                  OUTPUT: RELEASE_NOTES.md
+
             - name: Create GitHub release
               uses: softprops/action-gh-release@v2
               with:
                   token: ${{ secrets.GITHUB_TOKEN }}
-                  body_path: CHANGELOG.md
+                  body_path: RELEASE_NOTES.md
                   tag_name: ${{ steps.version.outputs.version }}
                   name: BloTils-v${{ steps.version.outputs.version }}
