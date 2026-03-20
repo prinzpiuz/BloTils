@@ -1,17 +1,17 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "files": {
     "BloTils.js": {
-      "sri": "sha384-Kka8q4MRraU4BsdIO2SX7YzSSgWFfoQ0Bxbhhoa851m++dX+ZaKi9QhByD+gpaVb",
-      "size": "10780 bytes"
+      "sri": "sha384-7abatkUpCLmQ8EWKNG5HGg/Zr9yBy+vh67YMWihRGybvEsV48nNz5yKGIVHXdC0d",
+      "size": "6923 bytes"
     },
     "BloTils.min.js": {
-      "sri": "sha384-LALymwPBn/ggGNNFqVChJQiIHLwelRpvHX8Sx2382VyX0ZcOUUgjVhRRejXE0kpl",
-      "size": "5539 bytes"
+      "sri": "sha384-+FlMbufuS45mY7oUFG31xojfsr5iVrfjM2Apg8x8EIbh4ltC2AOSm7lBTm33LSSa",
+      "size": "2969 bytes"
     }
   },
   "jsdelivr": {
-    "original": "https://cdn.jsdelivr.net/gh/prinzpiuz/BloTils@js-v1.0.1/dist/BloTils.js",
-    "minified": "https://cdn.jsdelivr.net/gh/prinzpiuz/BloTils@js-v1.0.1/dist/BloTils.min.js"
+    "original": "https://cdn.jsdelivr.net/gh/prinzpiuz/BloTils@js-v1.0.2/dist/BloTils.js",
+    "minified": "https://cdn.jsdelivr.net/gh/prinzpiuz/BloTils@js-v1.0.2/dist/BloTils.min.js"
   }
 }
